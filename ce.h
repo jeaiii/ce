@@ -115,23 +115,23 @@ namespace ce
         template<class T, size_t, size_t, class, class> struct sequence;
         template<class T, size_t N, size_t...As, size_t...Is> struct sequence<T, N, 0, items<size_t, As...>, items<size_t, Is...>> : sequence<T, N / 2, N % 2, items<size_t, As..., (sizeof...(As) + As)...>, items<size_t, Is...>> { };
         template<class T, size_t N, size_t...As, size_t...Is> struct sequence<T, N, 1, items<size_t, As...>, items<size_t, Is...>> : sequence<T, N / 2, N % 2, items<size_t, As..., (sizeof...(As) + As)...>, items<size_t, Is..., (sizeof...(Is) + As)...>> { };
-        template<class T, size_t...As, size_t...Is> struct sequence<T, 0, 0, items<size_t, As...>, items<size_t, Is...>> { using type = items < T, T{ Is }... > ; };
-        template<class T, size_t...As, size_t...Is> struct sequence<T, 0, 1, items<size_t, As...>, items<size_t, Is...>> { using type = items < T, T{ Is }..., T{ sizeof...(Is) + As }... > ; };
+        template<class T, size_t...As, size_t...Is> struct sequence<T, 0, 0, items<size_t, As...>, items<size_t, Is...>> { using type = items<T, T{ Is }... > ; };
+        template<class T, size_t...As, size_t...Is> struct sequence<T, 0, 1, items<size_t, As...>, items<size_t, Is...>> { using type = items<T, T{ Is }..., T{ sizeof...(Is) + As }... > ; };
     }
     template<class T, size_t N> using sequence = detail::sequence<T, N / 2, N % 2, items<size_t, 0>, items<size_t>>;
     template<class T, size_t N> using sequence_t = typename detail::sequence<T, N / 2, N % 2, items<size_t, 0>, items<size_t>>::type;
 
     //--------
 
-    template<class...> struct tupple;
-    template<> struct tupple<> { enum : size_t { count = 0 }; };
-    template<class T0> struct tupple<T0> { enum : size_t { count = 1 }; T0 _0; };
-    template<class T0, class T1> struct tupple<T0, T1> { enum : size_t { count = 2 }; T0 _0; T1 _1; };
-    template<class T0, class T1, class T2> struct tupple<T0, T1, T2> { enum : size_t { count = 3 }; T0 _0; T1 _1; T2 _2; };
-    template<class T0, class T1, class T2, class T3> struct tupple<T0, T1, T2, T3> { enum : size_t { count = 4 }; T0 _0; T1 _1; T2 _2; T3 _3; };
+    template<class...> struct tuple;
+    template<> struct tuple<> { enum : size_t { count = 0 }; };
+    template<class T0> struct tuple<T0> { enum : size_t { count = 1 }; T0 _0; };
+    template<class T0, class T1> struct tuple<T0, T1> { enum : size_t { count = 2 }; T0 _0; T1 _1; };
+    template<class T0, class T1, class T2> struct tuple<T0, T1, T2> { enum : size_t { count = 3 }; T0 _0; T1 _1; T2 _2; };
+    template<class T0, class T1, class T2, class T3> struct tuple<T0, T1, T2, T3> { enum : size_t { count = 4 }; T0 _0; T1 _1; T2 _2; T3 _3; };
 
-    template<class T> using box = tupple<T>;
-    template<class T, class U> using pair = tupple<T, U>;
+    template<class T> using box = tuple<T>;
+    template<class T, class U> using pair = tuple<T, U>;
 
     namespace detail
     {
