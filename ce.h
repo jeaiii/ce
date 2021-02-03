@@ -1,3 +1,4 @@
+#pragma once
 /*
 MIT License
 
@@ -21,6 +22,33 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
+#ifdef _MSC_VER
+
+namespace ce
+{
+    extern "C" unsigned int __cdecl _rotl(unsigned int, int);
+    extern "C" unsigned __int64 __rdtsc();
+    extern "C" unsigned __int64 __cdecl strlen(const char*);
+    #pragma intrinsic(strlen)
+}
+
+#define CE_TIME_STAMP() ce::uint64_t(__rdtsc())
+#define CE_DEBUG_BREAK(...) __debugbreak()
+#define CE_ROTL32(...) _rotl(__VA_ARGS__)
+
+#endif //_MSC_VER
+
+#define CE_ERROR(...) CE_DEBUG_BREAK()
+#define CE_ASSERT(...) void(bool{ __VA_ARGS__ } || (CE_ERROR(__VA_ARGS__), false))
+#define CE_VERIFY(...) (bool{ __VA_ARGS__ } || (CE_ERROR(__VA_ARGS__), false))
+#define CE_FAILED(...) (bool{ __VA_ARGS__ } && (CE_ERROR(__VA_ARGS__), true))
+
+#if __cpp_fold_expressions
+#define CE_FOLD_LEFT_COMMA(...) (__VA_ARGS__, ...)
+#else
+#define CE_FOLD_LEFT_COMMA(...) void(ce::identity_t<int[]>{ (void(__VA_ARGS__), 0)... });
+#endif
 
 namespace ce
 {
@@ -46,6 +74,7 @@ namespace ce
     using namespace core;
 
     //--------
+    template<class T> using identity_t = T;
 
     template<class T, T...Is> struct items { enum : size_t { count = sizeof...(Is) }; };
     template<class T, T I> struct items<T, I> { enum : size_t { count = 1 }; enum : T { value = I }; };
@@ -70,10 +99,10 @@ namespace ce
     template<class...> struct are_same : items<bool, false> { };
     template<class T> struct are_same<T> : items<bool, true> { };
     template<class T, class...Ts> struct are_same<T, T, Ts...> : are_same<T, Ts...> { };
-    template<class...Ts> constexpr auto are_same_v = are_same<Ts...>::value;
+    template<class...Ts> constexpr bool are_same_v = are_same<Ts...>::value;
 
     template<class T, class U> using is_same = are_same<T, U>;
-    template<class T, class U> constexpr auto is_same_v = are_same<T, U>::value;
+    template<class T, class U> constexpr bool is_same_v = are_same<T, U>::value;
 
     template<class T, class...Ts> using enable_same_t = enable_t<are_same_v<T, Ts...>, T>;
 
@@ -125,6 +154,7 @@ namespace ce
 
     template<class...> struct tuple;
     template<> struct tuple<> { enum : size_t { count = 0 }; };
+
     template<class T0> struct tuple<T0> { enum : size_t { count = 1 }; T0 _0; };
     template<class T0, class T1> struct tuple<T0, T1> { enum : size_t { count = 2 }; T0 _0; T1 _1; };
     template<class T0, class T1, class T2> struct tuple<T0, T1, T2> { enum : size_t { count = 3 }; T0 _0; T1 _1; T2 _2; };
@@ -137,6 +167,7 @@ namespace ce
     {
         struct any { any(...);  template<class T> operator T() const; };
 
+#if __cpp_structured_bindings
         template<class T, size_t...Ns> constexpr bool test_arrity(...) { return false; }
         template<class T, size_t...Ns> constexpr decltype(T{ any(Ns)... }, true) test_arrity(int) { return true; }
 
@@ -162,6 +193,13 @@ namespace ce
         template<class T, size_t N> struct crack<T, N, 2> { static auto get(T t) { auto [_0, _1] = t; return get(items<size_t, N>{}, _0, _1); } };
         template<class T, size_t N> struct crack<T, N, 3> { static auto get(T t) { auto [_0, _1, _2] = t; return get(items<size_t, N>{}, _0, _1, _2); } };
         template<class T, size_t N> struct crack<T, N, 4> { static auto get(T t) { auto [_0, _1, _2, _3] = t; return get(items<size_t, N>{}, _0, _1, _2, _3); } };
+#else
+        template<class T, size_t N> struct crack { static detail::any get(T) = delete; };
+        template<class T> struct crack<T, 0> { static auto get(T t) { return t._0; } };
+        template<class T> struct crack<T, 1> { static auto get(T t) { return t._1; } };
+        template<class T> struct crack<T, 2> { static auto get(T t) { return t._2; } };
+        template<class T> struct crack<T, 3> { static auto get(T t) { return t._3; } };
+#endif
     }
 
     template<size_t N, class T> auto get(T const& t) { return detail::crack<T, N>::get(t); }
@@ -200,11 +238,9 @@ namespace ce
 
     //--------
 
-    enum : uint32_t { c_crc32c = 0x82F63B78 };
-
     namespace detail
     {
-        template<uint32_t P, uint32_t N, uint32_t I> struct crc32_8
+        template<uint32_t P, size_t N, size_t I> struct crc32_8
         {
             enum : uint32_t
             {
@@ -213,7 +249,7 @@ namespace ce
             };
         };
 
-        template<uint32_t P, uint32_t I> struct crc32_8<P, 0, I>
+        template<uint32_t P, size_t I> struct crc32_8<P, 0, I>
         {
             enum : uint32_t
             {
@@ -227,38 +263,98 @@ namespace ce
 
         template<uint32_t P> struct crc32
         {           
-            enum type : uint32_t { initial = 0xffffffff, polynomial = P };
-            
-            template<size_t, class> struct table;
-            template<size_t N, size_t...Is> struct table<N, items<size_t, Is...>>
+            enum class type : uint32_t { initial = 0, polynomial = P };
+
+            template<size_t, class> struct build;
+            template<size_t N, size_t...Is> struct build<N, items<size_t, Is...>>
             {
                 static constexpr uint32_t vs[sizeof...(Is)] = { crc32_8<P, N, Is>::v... };
             };
 
-            using t0 = table<0, sequence_t<size_t, 256>>;
+            template<size_t N> using table = build<N, sequence_t<size_t, 256>>;
         };
-
-        static_assert(crc32_8<c_crc32c, 0, 0>::v == 0);
-        static_assert(crc32_8<c_crc32c, 0, 1>::v == 0xf26b8303);
-        static_assert(crc32_8<c_crc32c, 0, 255>::v == 0xad7d5351);
-        static_assert(crc32_8<c_crc32c, 1, 0>::v == 0);
-        static_assert(crc32_8<c_crc32c, 1, 1>::v == 0x13a29877);
-        static_assert(crc32_8<c_crc32c, 1, 255>::v == 0xa3e32483);
-        static_assert(crc32_8<c_crc32c, 15, 255>::v == 0x8fda7dfa);
     }
 
     template<uint32_t P> using crc32_t = typename detail::crc32<P>::type;
-    using crc32c_t = typename detail::crc32<c_crc32c>::type;
+    
+    using crc32c_t = typename detail::crc32<0x82f63b78>::type;
 
-    template<class T, uint32_t P = T::polynomial> T crc32(T c, size_t n, uint8_t const* p)
+    static_assert(detail::crc32<0x82f63b78>::table<0>::vs[0] == 0, "invalid crc32c value");
+    static_assert(detail::crc32<0x82f63b78>::table<0>::vs[1] == 0xf26b8303, "invalid crc32c value");
+    static_assert(detail::crc32<0x82f63b78>::table<0>::vs[255] == 0xad7d5351, "invalid crc32c value");
+    static_assert(detail::crc32<0x82f63b78>::table<1>::vs[0] == 0, "invalid crc32c value");
+    static_assert(detail::crc32<0x82f63b78>::table<1>::vs[1] == 0x13a29877, "invalid crc32c value");
+    static_assert(detail::crc32<0x82f63b78>::table<1>::vs[255] == 0xa3e32483, "invalid crc32c value");
+    static_assert(detail::crc32<0x82f63b78>::table<15>::vs[255] == 0x8fda7dfa, "invalid crc32c value");
+
+    template<class T, T P = T::polynomial> constexpr T crc32(T c, size_t n, uint64_t const p[])
     {
-        uint32_t v = uint32_t(c);
+        uint32_t v = ~uint32_t(c);
 
         for (size_t i = 0; i < n; ++i)
-            v = v / 256 ^ detail::crc32<P>::t0::vs[v % 256 ^ p[i]];
+        {
+            auto q = p[i];
+            v ^= uint32_t(q);
+            uint32_t w = uint32_t(q >> 32);
 
-        return T{ v };
+            v = detail::crc32<uint32_t(P)>::table<0>::vs[w / 16777216] ^
+                detail::crc32<uint32_t(P)>::table<1>::vs[w / 65536 % 256] ^
+                detail::crc32<uint32_t(P)>::table<2>::vs[w / 256 % 256] ^
+                detail::crc32<uint32_t(P)>::table<3>::vs[w % 256] ^
+                detail::crc32<uint32_t(P)>::table<4>::vs[v / 16777216] ^
+                detail::crc32<uint32_t(P)>::table<5>::vs[v / 65536 % 256] ^
+                detail::crc32<uint32_t(P)>::table<6>::vs[v / 256 % 256] ^
+                detail::crc32<uint32_t(P)>::table<7>::vs[v % 256];
+        }
+
+        return T(~v);
     }
+
+    template<class T,T P = T::polynomial> constexpr T crc32(T c, size_t n, uint32_t const p[])
+    {
+        uint32_t v = ~uint32_t(c);
+
+        for (size_t i = 0; i < n; ++i)
+        {
+            v ^= p[i];
+            v = detail::crc32<uint32_t(P)>::table<0>::vs[v / 16777216] ^
+                detail::crc32<uint32_t(P)>::table<1>::vs[v / 65536 % 256] ^
+                detail::crc32<uint32_t(P)>::table<2>::vs[v / 256 % 256] ^
+                detail::crc32<uint32_t(P)>::table<3>::vs[v % 256];
+        }
+
+        return T(~v);
+    }
+
+    template<class T, T P = T::polynomial> constexpr T crc32(T c, size_t n, uint8_t const p[])
+    {
+        uint32_t v = ~uint32_t(c);
+
+        for (size_t i = 0; i < n; ++i)
+            v = v / 256 ^ detail::crc32<uint32_t(P)>::table<0>::vs[v % 256 ^ p[i]];
+
+        return T(~v);
+    }
+
+    template<size_t N>
+    constexpr uint32_t crc32c(char const (&s)[N])
+    {
+        uint32_t v = ~uint32_t(crc32c_t::initial);
+
+        for (size_t i = 0; i < N - 1; ++i)
+            v = v / 256 ^ detail::crc32<uint32_t(crc32c_t::polynomial)>::table<0>::vs[v % 256 ^ uint8_t(s[i])];
+
+        return ~v;
+    }
+
+    static_assert(crc32(crc32c_t::initial, 1, identity_t<uint64_t[1]>{ 0x1234567812345678ull }) ==
+        crc32(crc32c_t::initial, 2, identity_t<uint32_t[2]>{ 0x12345678u, 0x12345678u }), "");
+
+    static_assert(crc32(crc32c_t::initial, 1, identity_t<uint64_t[1]>{ 0x1234567812345678ull }) ==
+        crc32(crc32c_t::initial, 8, identity_t<uint8_t[8]>{ 0x78, 0x56, 0x34, 0x12, 0x78, 0x56, 0x34, 0x12 }), "");
+
+    static_assert(crc32c("The quick brown fox jumps over the lazy dog") == 0x22620404, "crc32c failed");
+    static_assert(crc32c("123456789") == 0xe3069283, "crc32c failed");
 
     //--------
 
@@ -271,17 +367,40 @@ namespace ce
         template<class T, class...Ks> struct vec<T, 3, Ks...> { enum : size_t { count = 3 }; using type = T; T x; T y; T z; };
         template<class T, class...Ks> struct vec<T, 4, Ks...> { enum : size_t { count = 4 }; using type = T; T x; T y; T z; T w; };
 
-        int64_t sqrx(int32_t a) { return int64_t(a) * a; }
-        int64_t dotx(int32_t a, int32_t b) { return int64_t(a) * b; }
+        inline int64_t sqrx(int32_t a) { return int64_t(a) * a; }
+        inline int64_t dotx(int32_t a, int32_t b) { return int64_t(a) * b; }
+
+        inline float sqrx(float a) { return a * a; }
+        inline float dotx(float a, float b) { return a * b; }
 
         template<class T, class...Ks> auto sqrx(const vec<T, 2, Ks...>& a) -> decltype(sqrx(a.x))
         {
-            return { int64_t(a.x) * a.x + int64_t(a.y) * a.y };
+            using E = decltype(sqrx(a.x));
+            return { E(a.x) * a.x + E(a.y) * a.y };
         }
 
         template<class T, class...Ks> auto dotx(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) -> decltype(dotx(a.x, b.x))
         {
-            return { int64_t(a.x) * b.x + int64_t(a.y) * b.y };
+            using E = decltype(dotx(a.x, b.x));
+            return { E(a.x) * b.x + E(a.y) * b.y };
+        }
+
+        template<class T, class...Ks> auto dotx(const vec<T, 3, Ks...>& a, const vec<T, 3, Ks...>& b) -> decltype(dotx(a.x, b.x))
+        {
+            using E = decltype(dotx(a.x, b.x));
+            return { E(a.x) * b.x + E(a.y) * b.y + E(a.z) * b.z };
+        }
+
+        template<class T, class...Ks> auto crossx(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b)-> decltype(dotx(a.x, b.x))
+        {
+            using E = decltype(dotx(a.x, b.x));
+            return E(a.x) * b.y - E(a.y) * b.x;
+        };
+
+        template<class T, class...Ks> auto crossx(const vec<T, 3, Ks...>& a, const vec<T, 3, Ks...>& b) -> vec<decltype(dotx(a.x, b.x)), 3, Ks...>
+        {
+            using E = decltype(dotx(a.x, b.x));
+            return { E(a.y) * b.z - E(a.z) * b.y, E(a.z) * b.x - E(a.x) * b.z, E(a.x) * b.y - E(a.y) * b.x };
         }
 
         template<class T, class...Ks> bool operator==(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) { return a.x == b.x && a.y == b.y; }
@@ -293,9 +412,47 @@ namespace ce
         template<class T, class...Ks> vec<T, 2, Ks...>& operator+=(vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) { a.x += b.x; a.y += b.y; return a; }
         template<class T, class...Ks> vec<T, 2, Ks...> operator-(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) { return { a.x - b.x, a.y - b.y }; }
 
+        template<class T, class...Ks> vec<T, 2, Ks...> operator*(const vec<T, 2, Ks...>& a, int32_t b) { return { a.x * b, a.y * b }; }
+        template<class T, class...Ks> vec<T, 2, Ks...>& operator*=(vec<T, 2, Ks...>& a, int32_t b) { a.x *= b; a.y *= b; return a; }
+
         template<class T, class...Ks> vec<T, 2, Ks...> operator/(const vec<T, 2, Ks...>& a, int32_t b) { return { a.x / b, a.y / b }; }
         template<class T, class...Ks> vec<T, 2, Ks...>& operator/=(vec<T, 2, Ks...>& a, int32_t b) { a.x /= b; a.y /= b; return a; }
+
+
+        template<class T, class...Ks> vec<T, 3, Ks...> operator-(const vec<T, 3, Ks...>& a, const vec<T, 3, Ks...>& b) { return { a.x - b.x, a.y - b.y, a.z - b. z }; }
     }
 
-    using namespace math;
+    using namespace math;   
+    
+    namespace random
+    {
+        // http://prng.di.unimi.it/xoroshiro64starstar.c
+        struct xoroshiro64ss
+        {
+            uint32_t a;
+            uint32_t b;
+            
+            friend void seed(xoroshiro64ss& g, size_t size, uint8_t data[])
+            {
+                auto a = crc32(crc32c_t::initial, size / 2, data);
+                auto b = crc32(a, size - size / 2, data + size / 2);
+
+                g.a = uint32_t(a);
+                g.b = uint32_t(b);
+            }
+
+            friend uint32_t next32(xoroshiro64ss& g)
+            {
+                const uint32_t a = g.a;
+                const uint32_t b = g.b ^ a;
+                g.a = CE_ROTL32(a, 26) ^ b ^ (b << 9);
+                g.b = CE_ROTL32(b, 13);
+                return CE_ROTL32(a * 0x9e3779bb, 5) * 5;
+            }
+        };
+    }
+
+    using namespace random;
+
+    template<size_t N, class T> constexpr size_t countof(T const (&)[N]) { return N; }
 }
