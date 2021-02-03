@@ -23,26 +23,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifdef _MSC_VER
 
 namespace ce
 {
-    extern "C" unsigned int __cdecl _rotl(unsigned int, int);
-    extern "C" unsigned __int64 __rdtsc();
-    extern "C" unsigned __int64 __cdecl strlen(const char*);
-    #pragma intrinsic(strlen)
+    namespace detail
+    {
+#ifdef _MSC_VER
+        extern "C" unsigned __int64 __rdtsc();
+        extern "C" unsigned int __cdecl _rotl(unsigned int, int);
+        extern "C" decltype(sizeof(0)) __cdecl strlen(const char*);
+        #pragma intrinsic(strlen)
+#endif
+        template<size_t N, class T> char(&countof_prototype(T const (&)[N]))[N];
+    }
 }
 
-#define CE_TIME_STAMP() ce::uint64_t(__rdtsc())
-#define CE_DEBUG_BREAK(...) __debugbreak()
-#define CE_ROTL32(...) _rotl(__VA_ARGS__)
-
-#endif //_MSC_VER
+#if defined(_MSC_VER)
+#define CE_DEBUG_BREAK() __debugbreak()
+#define CE_TIME_STAMP() static_cast<ce::uint64_t>(ce::detail::__rdtsc())
+#define CE_ROTL32(...) ce::detail::_rotl(__VA_ARGS__)
+#define CE_STRLEN(...) ce::detail::strlen(__VA_ARGS__)
+#elif defined(__clang__)
+#define CE_DEBUG_BREAK() __builtin_debugtrap()
+#define CE_TIME_STAMP() static_cast<ce::uint64_t>(__builtin_ia32_rdtsc())
+#define CE_STRLEN(...) __builtin_strlen(__VA_ARGS__)
+#define CE_ROTL32(...) __builtin_rotateleft32(__VA_ARGS__)
+#endif
 
 #define CE_ERROR(...) CE_DEBUG_BREAK()
 #define CE_ASSERT(...) void(bool{ __VA_ARGS__ } || (CE_ERROR(__VA_ARGS__), false))
 #define CE_VERIFY(...) (bool{ __VA_ARGS__ } || (CE_ERROR(__VA_ARGS__), false))
 #define CE_FAILED(...) (bool{ __VA_ARGS__ } && (CE_ERROR(__VA_ARGS__), true))
+
+#define CE_COUNTOF(...) sizeof(ce::detail::countof_prototype(__VA_ARGS__))
 
 #if __cpp_fold_expressions
 #define CE_FOLD_LEFT_COMMA(...) (__VA_ARGS__, ...)
@@ -74,6 +87,7 @@ namespace ce
     using namespace core;
 
     //--------
+
     template<class T> using identity_t = T;
 
     template<class T, T...Is> struct items { enum : size_t { count = sizeof...(Is) }; };
@@ -273,19 +287,21 @@ namespace ce
 
             template<size_t N> using table = build<N, sequence_t<size_t, 256>>;
         };
+
+        template<class T, size_t N> using crc32_table = typename crc32<uint32_t(T::polynomial)>::template table<N>;
     }
 
     template<uint32_t P> using crc32_t = typename detail::crc32<P>::type;
-    
+
     using crc32c_t = typename detail::crc32<0x82f63b78>::type;
 
-    static_assert(detail::crc32<0x82f63b78>::table<0>::vs[0] == 0, "invalid crc32c value");
-    static_assert(detail::crc32<0x82f63b78>::table<0>::vs[1] == 0xf26b8303, "invalid crc32c value");
-    static_assert(detail::crc32<0x82f63b78>::table<0>::vs[255] == 0xad7d5351, "invalid crc32c value");
-    static_assert(detail::crc32<0x82f63b78>::table<1>::vs[0] == 0, "invalid crc32c value");
-    static_assert(detail::crc32<0x82f63b78>::table<1>::vs[1] == 0x13a29877, "invalid crc32c value");
-    static_assert(detail::crc32<0x82f63b78>::table<1>::vs[255] == 0xa3e32483, "invalid crc32c value");
-    static_assert(detail::crc32<0x82f63b78>::table<15>::vs[255] == 0x8fda7dfa, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 0>::vs[0] == 0, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 0>::vs[1] == 0xf26b8303, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 0>::vs[255] == 0xad7d5351, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 1>::vs[0] == 0, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 1>::vs[1] == 0x13a29877, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 1>::vs[255] == 0xa3e32483, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 15>::vs[255] == 0x8fda7dfa, "invalid crc32c value");
 
     template<class T, T P = T::polynomial> constexpr T crc32(T c, size_t n, uint64_t const p[])
     {
@@ -297,30 +313,30 @@ namespace ce
             v ^= uint32_t(q);
             uint32_t w = uint32_t(q >> 32);
 
-            v = detail::crc32<uint32_t(P)>::table<0>::vs[w / 16777216] ^
-                detail::crc32<uint32_t(P)>::table<1>::vs[w / 65536 % 256] ^
-                detail::crc32<uint32_t(P)>::table<2>::vs[w / 256 % 256] ^
-                detail::crc32<uint32_t(P)>::table<3>::vs[w % 256] ^
-                detail::crc32<uint32_t(P)>::table<4>::vs[v / 16777216] ^
-                detail::crc32<uint32_t(P)>::table<5>::vs[v / 65536 % 256] ^
-                detail::crc32<uint32_t(P)>::table<6>::vs[v / 256 % 256] ^
-                detail::crc32<uint32_t(P)>::table<7>::vs[v % 256];
+            v = detail::crc32_table<T, 0>::vs[w / 16777216] ^
+                detail::crc32_table<T, 1>::vs[w / 65536 % 256] ^
+                detail::crc32_table<T, 2>::vs[w / 256 % 256] ^
+                detail::crc32_table<T, 3>::vs[w % 256] ^
+                detail::crc32_table<T, 4>::vs[v / 16777216] ^
+                detail::crc32_table<T, 5>::vs[v / 65536 % 256] ^
+                detail::crc32_table<T, 6>::vs[v / 256 % 256] ^
+                detail::crc32_table<T, 7>::vs[v % 256];
         }
 
         return T(~v);
     }
 
-    template<class T,T P = T::polynomial> constexpr T crc32(T c, size_t n, uint32_t const p[])
+    template<class T, T P = T::polynomial> constexpr T crc32(T c, size_t n, uint32_t const p[])
     {
         uint32_t v = ~uint32_t(c);
 
         for (size_t i = 0; i < n; ++i)
         {
             v ^= p[i];
-            v = detail::crc32<uint32_t(P)>::table<0>::vs[v / 16777216] ^
-                detail::crc32<uint32_t(P)>::table<1>::vs[v / 65536 % 256] ^
-                detail::crc32<uint32_t(P)>::table<2>::vs[v / 256 % 256] ^
-                detail::crc32<uint32_t(P)>::table<3>::vs[v % 256];
+            v = detail::crc32_table<T, 0>::vs[v / 16777216] ^
+                detail::crc32_table<T, 1>::vs[v / 65536 % 256] ^
+                detail::crc32_table<T, 2>::vs[v / 256 % 256] ^
+                detail::crc32_table<T, 3>::vs[v % 256];
         }
 
         return T(~v);
@@ -331,7 +347,7 @@ namespace ce
         uint32_t v = ~uint32_t(c);
 
         for (size_t i = 0; i < n; ++i)
-            v = v / 256 ^ detail::crc32<uint32_t(P)>::table<0>::vs[v % 256 ^ p[i]];
+            v = v / 256 ^ detail::crc32_table<T, 0>::vs[v % 256 ^ p[i]];
 
         return T(~v);
     }
@@ -342,7 +358,7 @@ namespace ce
         uint32_t v = ~uint32_t(crc32c_t::initial);
 
         for (size_t i = 0; i < N - 1; ++i)
-            v = v / 256 ^ detail::crc32<uint32_t(crc32c_t::polynomial)>::table<0>::vs[v % 256 ^ uint8_t(s[i])];
+            v = v / 256 ^ detail::crc32_table<crc32c_t, 0>::vs[v % 256 ^ uint8_t(s[i])];
 
         return ~v;
     }
@@ -453,6 +469,5 @@ namespace ce
     }
 
     using namespace random;
-
-    template<size_t N, class T> constexpr size_t countof(T const (&)[N]) { return N; }
 }
+
