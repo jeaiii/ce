@@ -26,12 +26,33 @@ SOFTWARE.
 
 namespace ce
 {
+    namespace core
+    {
+        using uint = unsigned int;
+
+        using size_t = decltype(sizeof(0));
+
+        using ptrdiff_t = decltype("" - "");
+
+        using uint8_t = unsigned char;
+        using uint16_t = unsigned short;
+        using uint32_t = decltype(0xffffffff);
+        using uint64_t = decltype(0xffffffffffffffff);
+
+        using int8_t = signed char;
+        using int16_t = short;
+        using int32_t = decltype(2147483647);
+        using int64_t = decltype(9223372036854775807);
+    }
+
+    using namespace core;
+
     namespace detail
     {
 #ifdef _MSC_VER
         extern "C" unsigned __int64 __rdtsc();
         extern "C" unsigned int __cdecl _rotl(unsigned int, int);
-        extern "C" decltype(sizeof(0)) __cdecl strlen(const char*);
+        extern "C" size_t __cdecl strlen(const char*);
         #pragma intrinsic(strlen)
 #endif
         template<size_t N, class T> char(&countof_prototype(T const (&)[N]))[N];
@@ -65,29 +86,6 @@ namespace ce
 
 namespace ce
 {
-    namespace core
-    {
-        using uint = unsigned int;
-
-        using size_t = decltype(sizeof(0));
-
-        using ptrdiff_t = decltype("" - "");
-
-        using uint8_t = unsigned char;
-        using uint16_t = unsigned short;
-        using uint32_t = decltype(0xffffffff);
-        using uint64_t = decltype(0xffffffffffffffff);
-
-        using int8_t = signed char;
-        using int16_t = short;
-        using int32_t = decltype(2147483647);
-        using int64_t = decltype(9223372036854775807);
-    }
-
-    using namespace core;
-
-    //--------
-
     template<class T> using identity_t = T;
 
     template<class T, T...Is> struct items { enum : size_t { count = sizeof...(Is) }; };
@@ -470,4 +468,3 @@ namespace ce
 
     using namespace random;
 }
-
