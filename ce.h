@@ -66,7 +66,7 @@ namespace ce
 }
 
 #if defined(_MSC_VER)
-#define CE_DEBUG_BREAK() (_ReadWriteBarrier(), __debugbreak())
+#define CE_DEBUG_BREAK() (ce::detail::_ReadWriteBarrier(), __debugbreak())
 #define CE_TIME_STAMP() static_cast<ce::uint64_t>(ce::detail::__rdtsc())
 #define CE_ROTL32(...) ce::detail::_rotl(__VA_ARGS__)
 #define CE_STRLEN(...) ce::detail::strlen(__VA_ARGS__)
