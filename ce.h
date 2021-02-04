@@ -98,6 +98,8 @@ namespace ce
     template<class...Ts> using car_t = typename types<Ts...>::car_t;
     template<class...Ts> using cdr_t = typename types<Ts...>::cdr_t;
 
+    template<class T, T...Ns> constexpr auto& items_v = identity_t<T const []>{ Ns... };
+
     //--------
 
     template<size_t, class...> struct select { };
@@ -360,12 +362,12 @@ namespace ce
 
         return ~v;
     }
+   
+    static_assert(crc32(crc32c_t::initial, 1, items_v<uint64_t, 0x1234567812345678ull>) ==
+        crc32(crc32c_t::initial, 2, items_v<uint32_t, 0x12345678u, 0x12345678u>), "");
 
-    static_assert(crc32(crc32c_t::initial, 1, identity_t<uint64_t[1]>{ 0x1234567812345678ull }) ==
-        crc32(crc32c_t::initial, 2, identity_t<uint32_t[2]>{ 0x12345678u, 0x12345678u }), "");
-
-    static_assert(crc32(crc32c_t::initial, 1, identity_t<uint64_t[1]>{ 0x1234567812345678ull }) ==
-        crc32(crc32c_t::initial, 8, identity_t<uint8_t[8]>{ 0x78, 0x56, 0x34, 0x12, 0x78, 0x56, 0x34, 0x12 }), "");
+    static_assert(crc32(crc32c_t::initial, 1, items_v<uint64_t, 0x1234567812345678ull>) ==
+        crc32(crc32c_t::initial, 8, items_v<uint8_t, 0x78, 0x56, 0x34, 0x12, 0x78, 0x56, 0x34, 0x12>), "");
 
     static_assert(crc32c("The quick brown fox jumps over the lazy dog") == 0x22620404, "crc32c failed");
     static_assert(crc32c("123456789") == 0xe3069283, "crc32c failed");
