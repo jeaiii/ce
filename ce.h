@@ -53,6 +53,7 @@ namespace ce
         extern "C" unsigned __int64 __rdtsc();
         extern "C" unsigned int __cdecl _rotl(unsigned int, int);
         extern "C" size_t __cdecl strlen(const char*);
+        extern "C" void  _ReadWriteBarrier();
         #pragma intrinsic(strlen)
 #endif
         template<size_t N, class T> char(&countof_prototype(T const (&)[N]))[N];
@@ -65,7 +66,7 @@ namespace ce
 }
 
 #if defined(_MSC_VER)
-#define CE_DEBUG_BREAK() __debugbreak()
+#define CE_DEBUG_BREAK() (_ReadWriteBarrier(), __debugbreak())
 #define CE_TIME_STAMP() static_cast<ce::uint64_t>(ce::detail::__rdtsc())
 #define CE_ROTL32(...) ce::detail::_rotl(__VA_ARGS__)
 #define CE_STRLEN(...) ce::detail::strlen(__VA_ARGS__)
