@@ -2,8 +2,9 @@
 
 - supports clang, gcc and msvc
 - no dependancies
+- header only
 - non-allocting
-- code code generation in non-optimized builds
+- good code generation in non-optimized builds
 
 ## Features
 - basic types
