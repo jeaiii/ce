@@ -56,6 +56,11 @@ namespace ce
         #pragma intrinsic(strlen)
 #endif
         template<size_t N, class T> char(&countof_prototype(T const (&)[N]))[N];
+
+        inline uint32_t rotl32(uint32_t x, int i)
+        {
+            return (x << (i & 31)) | (x >> (32 - (i & 31)));
+        }
     }
 }
 
@@ -69,6 +74,11 @@ namespace ce
 #define CE_TIME_STAMP() static_cast<ce::uint64_t>(__builtin_ia32_rdtsc())
 #define CE_STRLEN(...) __builtin_strlen(__VA_ARGS__)
 #define CE_ROTL32(...) __builtin_rotateleft32(__VA_ARGS__)
+#elif defined(__GNUC__)
+#define CE_DEBUG_BREAK() ({ __asm__ volatile("int $0x03"); })
+#define CE_TIME_STAMP() static_cast<ce::uint64_t>(__builtin_ia32_rdtsc())
+#define CE_STRLEN(...) __builtin_strlen(__VA_ARGS__)
+#define CE_ROTL32(...) ce::detail::rotl32(__VA_ARGS__)
 #endif
 
 #define CE_ERROR(...) CE_DEBUG_BREAK()
