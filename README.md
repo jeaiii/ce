@@ -3,7 +3,7 @@
 - supports clang, gcc and msvc
 - no dependancies
 - header only
-- non-allocting
+- non-allocating
 - good code generation in non-optimized builds
 
 ## Features
