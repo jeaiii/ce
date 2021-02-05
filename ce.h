@@ -265,54 +265,31 @@ namespace ce
 
     namespace detail
     {
-        template<uint32_t P, size_t N, size_t I> struct crc32_8
-        {
-            enum : uint32_t
-            {
-                x = crc32_8<P, N - 1, I>::v,
-                v = x / 256 ^ crc32_8<P, 0, x % 256>::v
-            };
-        };
-
-        template<uint32_t P, size_t I> struct crc32_8<P, 0, I>
-        {
-            enum : uint32_t
-            {
-                a = I / 2 ^ I % 2 * P,
-                b = a / 2 ^ a % 2 * P, c = b / 2 ^ b % 2 * P,
-                d = c / 2 ^ c % 2 * P, e = d / 2 ^ d % 2 * P,
-                f = e / 2 ^ e % 2 * P, g = f / 2 ^ f % 2 * P,
-                v = g / 2 ^ g % 2 * P,
-            };
-        };
-
         template<uint32_t P> struct crc32
         {           
             enum class type : uint32_t { initial = 0, polynomial = P };
 
-            template<size_t, class> struct build;
-            template<size_t N, size_t...Is> struct build<N, items<size_t, Is...>>
-            {
-                static constexpr uint32_t vs[sizeof...(Is)] = { crc32_8<P, N, Is>::v... };
-            };
+            static constexpr uint32_t crc(uint32_t i) { return i / 2 ^ i % 2 * P; }
+            template<size_t I> static constexpr uint32_t x8 = crc(crc(crc(crc(crc(crc(crc(crc(I))))))));
 
-            template<size_t N> using table = build<N, sequence_t<size_t, 256>>;
+            template<size_t, class> struct table;
+            template<size_t N, size_t...Is> struct table<N, items<size_t, Is...>>
+            {
+                using p = table<N - 1, items<size_t, Is...>>;
+                static constexpr uint32_t vs[sizeof...(Is)] = { p::vs[Is] / 256 ^ x8<p::vs[Is] % 256>... };
+            };
+            template<size_t...Is> struct table<0, items<size_t, Is...>>
+            {
+                static constexpr uint32_t vs[sizeof...(Is)] = { x8<Is>... };
+            };
         };
 
-        template<class T, size_t N> using crc32_table = typename crc32<uint32_t(T::polynomial)>::template table<N>;
+        template<class T, size_t N> using crc32_table = typename crc32<uint32_t(T::polynomial)>::template table<N, sequence_t<size_t, 256>>;
     }
 
     template<uint32_t P> using crc32_t = typename detail::crc32<P>::type;
 
     using crc32c_t = typename detail::crc32<0x82f63b78>::type;
-
-    static_assert(detail::crc32_table<crc32c_t, 0>::vs[0] == 0, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 0>::vs[1] == 0xf26b8303, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 0>::vs[255] == 0xad7d5351, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 1>::vs[0] == 0, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 1>::vs[1] == 0x13a29877, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 1>::vs[255] == 0xa3e32483, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 15>::vs[255] == 0x8fda7dfa, "invalid crc32c value");
 
     template<class T, T P = T::polynomial> constexpr T crc32(T c, size_t n, uint64_t const p[])
     {
@@ -373,15 +350,6 @@ namespace ce
 
         return ~v;
     }
-   
-    static_assert(crc32(crc32c_t::initial, 1, items_v<uint64_t, 0x1234567812345678ull>) ==
-        crc32(crc32c_t::initial, 2, items_v<uint32_t, 0x12345678u, 0x12345678u>), "");
-
-    static_assert(crc32(crc32c_t::initial, 1, items_v<uint64_t, 0x1234567812345678ull>) ==
-        crc32(crc32c_t::initial, 8, items_v<uint8_t, 0x78, 0x56, 0x34, 0x12, 0x78, 0x56, 0x34, 0x12>), "");
-
-    static_assert(crc32c("The quick brown fox jumps over the lazy dog") == 0x22620404, "crc32c failed");
-    static_assert(crc32c("123456789") == 0xe3069283, "crc32c failed");
 
     //--------
 
@@ -480,4 +448,23 @@ namespace ce
     }
 
     using namespace random;
+
+#if defined(CE_USER_CHECKED)
+    static_assert(detail::crc32_table<crc32c_t, 0>::vs[0] == 0, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 0>::vs[1] == 0xf26b8303, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 0>::vs[255] == 0xad7d5351, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 1>::vs[0] == 0, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 1>::vs[1] == 0x13a29877, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 1>::vs[255] == 0xa3e32483, "invalid crc32c value");
+    static_assert(detail::crc32_table<crc32c_t, 15>::vs[255] == 0x8fda7dfa, "invalid crc32c value");
+
+    static_assert(crc32(crc32c_t::initial, 1, items_v<uint64_t, 0x1234567812345678ull>) ==
+        crc32(crc32c_t::initial, 2, items_v<uint32_t, 0x12345678u, 0x12345678u>), "");
+
+    static_assert(crc32(crc32c_t::initial, 1, items_v<uint64_t, 0x1234567812345678ull>) ==
+        crc32(crc32c_t::initial, 8, items_v<uint8_t, 0x78, 0x56, 0x34, 0x12, 0x78, 0x56, 0x34, 0x12>), "");
+
+    static_assert(crc32c("The quick brown fox jumps over the lazy dog") == 0x22620404, "crc32c failed");
+    static_assert(crc32c("123456789") == 0xe3069283, "crc32c failed");
+#endif
 }
