@@ -23,7 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
 namespace ce
 {
     namespace core
@@ -49,7 +48,7 @@ namespace ce
 
     namespace detail
     {
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
         extern "C" unsigned __int64 __rdtsc();
         extern "C" unsigned int __cdecl _rotl(unsigned int, int);
         extern "C" size_t __cdecl strlen(const char*);
@@ -65,22 +64,81 @@ namespace ce
     }
 }
 
-#if defined(_MSC_VER)
-#define CE_DEBUG_BREAK() (ce::detail::_ReadWriteBarrier(), __debugbreak())
-#define CE_TIME_STAMP() static_cast<ce::uint64_t>(ce::detail::__rdtsc())
-#define CE_ROTL32(...) ce::detail::_rotl(__VA_ARGS__)
-#define CE_STRLEN(...) ce::detail::strlen(__VA_ARGS__)
-#elif defined(__clang__)
+//--------
+
+#define CE_CPU_X86_32 0
+#define CE_CPU_X86_64 0
+#define CE_CPU_X86 0
+
+#define CE_CPU_WASM_32 0
+#define CE_CPU_WASM_64 0
+#define CE_CPU_WASM 0
+
+#if defined(__wasm32)
+#undef CE_CPU_WASM_32
+#define CE_CPU_WASM_32 1
+#endif
+
+#if defined(__wasm64)
+#undef CE_CPU_WASM_64
+#define CE_CPU_WASM_64 1
+#endif
+
+#if CE_CPU_WASM_32 || CE_CPU_WASM_64
+#undef CE_CPU_WASM
+#define CE_CPU_WASM 1
+#endif
+
+#if defined(__x86_64__) || defined(_M_X64)
+#undef CE_CPU_X86_64
+#define CE_CPU_X86_64 1
+#endif
+
+#if defined(__i386__) || defined(_M_IX86)
+#undef CE_CPU_X86_32
+#define CE_CPU_X86_32 1
+#endif
+
+#if CE_CPU_X86_32 || CE_CPU_X86_64
+#undef CE_CPU_X86
+#define CE_CPU_X86 1
+#endif
+
+//--------
+
+#if defined(__clang__)
+
 #define CE_DEBUG_BREAK() __builtin_debugtrap()
-#define CE_TIME_STAMP() static_cast<ce::uint64_t>(__builtin_ia32_rdtsc())
+#define CE_TIME_STAMP() static_cast<ce::uint64_t>(__builtin_readcyclecounter())
 #define CE_STRLEN(...) __builtin_strlen(__VA_ARGS__)
 #define CE_ROTL32(...) __builtin_rotateleft32(__VA_ARGS__)
+
+#elif defined(_MSC_VER)
+
+#define CE_DEBUG_BREAK() (ce::detail::_ReadWriteBarrier(), __debugbreak())
+#if CE_CPU_X86
+#define CE_TIME_STAMP() static_cast<ce::uint64_t>(ce::detail::__rdtsc())
+#else
+#define CE_TIME_STAMP() ce::uint64_t(0)
+#endif
+#define CE_ROTL32(...) ce::detail::_rotl(__VA_ARGS__)
+#define CE_STRLEN(...) ce::detail::strlen(__VA_ARGS__)
+
 #elif defined(__GNUC__)
+
+#if CE_CPU_X86
 #define CE_DEBUG_BREAK() ({ __asm__ volatile("int $0x03"); })
 #define CE_TIME_STAMP() static_cast<ce::uint64_t>(__builtin_ia32_rdtsc())
+#else
+#define CE_DEBUG_BREAK() void(0)
+#define CE_TIME_STAMP() ce::uint64_t(0)
+#endif
 #define CE_STRLEN(...) __builtin_strlen(__VA_ARGS__)
 #define CE_ROTL32(...) ce::detail::rotl32(__VA_ARGS__)
+
 #endif
+
+//--------
 
 #define CE_ERROR(...) CE_DEBUG_BREAK()
 #define CE_ASSERT(...) void(bool{ __VA_ARGS__ } || (CE_ERROR(__VA_ARGS__), false))
@@ -94,6 +152,8 @@ namespace ce
 #else
 #define CE_FOLD_LEFT_COMMA(...) void(ce::identity_t<int[]>{ (void(__VA_ARGS__), 0)... });
 #endif
+
+//--------
 
 namespace ce
 {
@@ -231,6 +291,28 @@ namespace ce
 
     //--------
 
+    template<class T> struct span
+    {
+        size_t size;
+        T* data;
+
+        T* begin() { return data + 0; }
+        T* end() { return data + size; }
+
+        T const* begin() const { return data + 0; }
+        T const* end() const { return data + size; }
+
+        friend span skip(span s, size_t n)
+        {
+            return n < s.size ? span{ s.size - n, s.data + n } : span{ 0, s.data };
+        }
+
+        friend span trim(span s, size_t n)
+        {
+            return n < s.size ? span{ s.size - n, s.data } : span{ 0, s.data };
+        }
+    };
+
     template<class T, size_t N> struct list
     {
         size_t size;
@@ -246,19 +328,13 @@ namespace ce
         T const& operator[](size_t i) const { return *reinterpret_cast<T const*>(&data[i]); }
 
         template<class...Us>
-        void append(Us&&...us) { new (reinterpret_cast<T*>(&data[size])) T{ us... }; ++size; }
-    };
+        bool append(Us&&...us) 
+        {
+            return size < N ? new (reinterpret_cast<T*>(&data[size])) T{ us... }, ++size, true : false;
+        }
 
-    template<class T> struct span
-    {
-        size_t size;
-        T* data;
-
-        T* begin() { return data + 0; }
-        T* end() { return data + size; }
-
-        T const* begin() const { return data + 0; }
-        T const* end() const { return data + size; }
+        friend span<T> make_span(list& c) { return { c.size, reinterpret_cast<T*>(&c.data[0]) }; }
+        friend span<T const> make_span(list const& c) { return { c.size, reinterpret_cast<T const*>(&c.data[0]) }; }
     };
 
     //--------
