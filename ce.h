@@ -61,8 +61,12 @@ namespace ce
         {
             return (x << (i & 31)) | (x >> (32 - (i & 31)));
         }
+
+        class new_tag;
     }
 }
+
+inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return p; }
 
 //--------
 
@@ -330,7 +334,9 @@ namespace ce
         template<class...Us>
         bool append(Us&&...us) 
         {
-            return size < N ? new (reinterpret_cast<T*>(&data[size])) T{ us... }, ++size, true : false;
+            return size < N 
+                ? new (reinterpret_cast<detail::new_tag*>(&data[size])) T{ static_cast<Us>(us)... }, ++size, true
+                : false;
         }
 
         friend span<T> make_span(list& c) { return { c.size, reinterpret_cast<T*>(&c.data[0]) }; }
