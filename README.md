@@ -23,11 +23,11 @@
 ## macros
 - `CE_STATIC_ASSERT()` - pre c++17 static_assert with optional and better error messges
 - `CE_DEBUG_BREAK()` - break to debugger
-- `CE_TIME_STAMP()` - high resolution timestamp counter
+- `CE_TIME_STAMP()` - high resolution time stamp counter
 - `CE_ROTL32()` - rotate left intrinsic
 - `CE_STRLEN()` - strlen intrinsic
 - `CE_ERROR()`, `CE_ASSERT()`, `CE_VERIFY()`, and `CE_FAILED()` - runtime error checking
 - `CE_COUNTOF()` - compile time array extent
 - `CE_FOLD_LEFT_COMMA()` - pre c++17 left comma fold expression
 - `CE_CPU_X86`, `CE_CPU_X86_32`, `CE_CPU_X86_64` - x86 compile time cpu detection
-- `CE_CPU_WASM`, `CE_CPU_WASM_32`, `CE_CPU_WASM_64` - x86 compile time cpu detection
+- `CE_CPU_WASM`, `CE_CPU_WASM_32`, `CE_CPU_WASM_64` - WebAssembly compile time cpu detection
