@@ -20,7 +20,7 @@
 - `sqrx()`, `dotx()`, and `crossx()` - operations on scalars and `vec`s which expand integer types by 2x bits
 - `in_polygon_xy()` and `in_polygon()` - generic point in polygon test (winding number) for types with `.x` & `.y` members
 - `xoroshiro64ss` - easy, good, small random number generator **xoroshiro64\*\*** http://prng.di.unimi.it/xoroshiro64starstar.c
-## macros
+## Macros
 - `CE_STATIC_ASSERT()` - pre c++17 static_assert with optional and better error messges
 - `CE_DEBUG_BREAK()` - break to debugger
 - `CE_TIME_STAMP()` - high resolution time stamp counter
