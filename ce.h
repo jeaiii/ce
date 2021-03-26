@@ -42,12 +42,22 @@ namespace ce
         using int16_t = short;
         using int32_t = decltype(2147483647);
         using int64_t = decltype(9223372036854775807);
+
+        template<class T>
+        void swap(T& a, T& b)
+        {
+            T c(a);
+            a = b;
+            b = c;
+        }
     }
 
     using namespace core;
 
     namespace detail
     {
+        constexpr bool static_assert_helper(bool condition, char const* = nullptr) { return condition; }
+
 #if defined(_MSC_VER)
         extern "C" unsigned __int64 __rdtsc();
         extern "C" unsigned int __cdecl _rotl(unsigned int, int);
@@ -143,6 +153,8 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #endif
 
 //--------
+// pre c++17 static_assert with optional and better error message
+#define CE_STATIC_ASSERT(...) static_assert(ce::detail::static_assert_helper(__VA_ARGS__), "static_assert(" #__VA_ARGS__ ") failed")
 
 #define CE_ERROR(...) CE_DEBUG_BREAK()
 #define CE_ASSERT(...) void(bool{ __VA_ARGS__ } || (CE_ERROR(__VA_ARGS__), false))
@@ -167,7 +179,7 @@ namespace ce
     template<class T, T I> struct items<T, I> { enum : size_t { count = 1 }; enum : T { value = I }; };
 
     template<class...> struct types;
-    template<> struct types<> : items<size_t, 0> { enum : size_t { count = 0 }; using car_t = types<>; using cdr_t = types<>; };
+    template<> struct types<> { enum : size_t { count = 0 }; using car_t = void; using cdr_t = void; };
     template<class T, class...Ts> struct types<T, Ts...> { enum : size_t { count = 1 + sizeof...(Ts) }; using car_t = T; using cdr_t = types<Ts...>; };
 
     template<class...Ts> using car_t = typename types<Ts...>::car_t;
@@ -332,9 +344,9 @@ namespace ce
         T const& operator[](size_t i) const { return *reinterpret_cast<T const*>(&data[i]); }
 
         template<class...Us>
-        bool append(Us&&...us) 
+        bool append(Us&&...us)
         {
-            return size < N 
+            return size < N
                 ? new (reinterpret_cast<detail::new_tag*>(&data[size])) T{ static_cast<Us>(us)... }, ++size, true
                 : false;
         }
@@ -348,7 +360,7 @@ namespace ce
     namespace detail
     {
         template<uint32_t P> struct crc32
-        {           
+        {
             enum class type : uint32_t { initial = 0, polynomial = P };
 
             static constexpr uint32_t crc(uint32_t i) { return i / 2 ^ i % 2 * P; }
@@ -437,70 +449,124 @@ namespace ce
 
     namespace math
     {
-        template<class, size_t, class...> struct vec;
-        template<class T, class...Ks> struct vec<T, 0, Ks...> { enum : size_t { count = 0 }; using type = T; };
-        template<class T, class...Ks> struct vec<T, 1, Ks...> { enum : size_t { count = 1 }; using type = T; T x; };
-        template<class T, class...Ks> struct vec<T, 2, Ks...> { enum : size_t { count = 2 }; using type = T; T x; T y; };
-        template<class T, class...Ks> struct vec<T, 3, Ks...> { enum : size_t { count = 3 }; using type = T; T x; T y; T z; };
-        template<class T, class...Ks> struct vec<T, 4, Ks...> { enum : size_t { count = 4 }; using type = T; T x; T y; T z; T w; };
+        template<size_t, class...> struct vec;
+        template<class T, class...Ks> struct vec<0, T, Ks...> { enum : size_t { count = 0 }; using type = T; };
+        template<class T, class...Ks> struct vec<1, T, Ks...> { enum : size_t { count = 1 }; using type = T; T x; };
+        template<class T, class...Ks> struct vec<2, T, Ks...> { enum : size_t { count = 2 }; using type = T; T x; T y; };
+        template<class T, class...Ks> struct vec<3, T, Ks...> { enum : size_t { count = 3 }; using type = T; T x; T y; T z; };
+        template<class T, class...Ks> struct vec<4, T, Ks...> { enum : size_t { count = 4 }; using type = T; T x; T y; T z; T w; };
 
-        inline int64_t sqrx(int32_t a) { return int64_t(a) * a; }
-        inline int64_t dotx(int32_t a, int32_t b) { return int64_t(a) * b; }
+        template<class...Ts> using vec0 = vec<0, Ts...>;
+        template<class...Ts> using vec1 = vec<1, Ts...>;
+        template<class...Ts> using vec2 = vec<2, Ts...>;
+        template<class...Ts> using vec3 = vec<3, Ts...>;
+        template<class...Ts> using vec4 = vec<4, Ts...>;
 
-        inline float sqrx(float a) { return a * a; }
-        inline float dotx(float a, float b) { return a * b; }
+        template<size_t H, size_t W, class T, class...Ks> using mat = vec<H, vec<W, T>, Ks...>;
 
-        template<class T, class...Ks> auto sqrx(const vec<T, 2, Ks...>& a) -> decltype(sqrx(a.x))
+        constexpr int64_t sqrx(int32_t a) { return int64_t(a) * a; }
+        constexpr int64_t dotx(int32_t a, int32_t b) { return int64_t(a) * b; }
+
+        constexpr float sqrx(float a) { return a * a; }
+        constexpr float dotx(float a, float b) { return a * b; }
+
+        template<class...U> constexpr auto sqrx(const vec2<U...>& a) -> decltype(sqrx(a.x))
         {
             using E = decltype(sqrx(a.x));
-            return { E(a.x) * a.x + E(a.y) * a.y };
+            return E(a.x) * a.x + E(a.y) * a.y;
         }
 
-        template<class T, class...Ks> auto dotx(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) -> decltype(dotx(a.x, b.x))
+        template<class...U> constexpr auto dotx(const vec2<U...>& a, const vec2<U...>& b) -> decltype(dotx(a.x, b.x))
         {
             using E = decltype(dotx(a.x, b.x));
-            return { E(a.x) * b.x + E(a.y) * b.y };
+            return E(a.x) * b.x + E(a.y) * b.y;
         }
 
-        template<class T, class...Ks> auto dotx(const vec<T, 3, Ks...>& a, const vec<T, 3, Ks...>& b) -> decltype(dotx(a.x, b.x))
+        template<class...U> constexpr auto dotx(const vec<3, U...>& a, const vec<3, U...>& b) -> decltype(dotx(a.x, b.x))
         {
             using E = decltype(dotx(a.x, b.x));
-            return { E(a.x) * b.x + E(a.y) * b.y + E(a.z) * b.z };
+            return E(a.x) * b.x + E(a.y) * b.y + E(a.z) * b.z;
         }
 
-        template<class T, class...Ks> auto crossx(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b)-> decltype(dotx(a.x, b.x))
+        template<class...U> constexpr auto crossx(const vec2<U...>& a, const vec2<U...>& b)-> decltype(dotx(a.x, b.x))
         {
             using E = decltype(dotx(a.x, b.x));
             return E(a.x) * b.y - E(a.y) * b.x;
         };
 
-        template<class T, class...Ks> auto crossx(const vec<T, 3, Ks...>& a, const vec<T, 3, Ks...>& b) -> vec<decltype(dotx(a.x, b.x)), 3, Ks...>
+        template<class T, class...Ks> constexpr auto crossx(const vec<3, T, Ks...>& a, const vec<3, T, Ks...>& b) -> vec<3, decltype(dotx(a.x, b.x)), Ks...>
         {
             using E = decltype(dotx(a.x, b.x));
             return { E(a.y) * b.z - E(a.z) * b.y, E(a.z) * b.x - E(a.x) * b.z, E(a.x) * b.y - E(a.y) * b.x };
         }
 
-        template<class T, class...Ks> bool operator==(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) { return a.x == b.x && a.y == b.y; }
-        template<class T, class...Ks> bool operator==(const vec<T, 2, Ks...>& a, T b) { return a.x == b && a.y == b; }
-        template<class T, class...Ks> bool operator!=(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) { return a.x != b.x || a.y != b.y; }
-        template<class T, class...Ks> bool operator!=(const vec<T, 2, Ks...>& a, T b) { return a.x != b || a.y != b; }
+        template<class...U> constexpr bool operator==(vec2<U...> const& a, vec2<U...> const& b) { return a.x == b.x && a.y == b.y; }
+        template<class...U> constexpr bool operator==(vec2<U...> const& a, car_t<U...> const& b) { return a.x == b && a.y == b; }
+        template<class...U> constexpr bool operator!=(vec2<U...> const& a, vec2<U...> const& b) { return a.x != b.x || a.y != b.y; }
+        template<class...U> constexpr bool operator!=(vec2<U...> const& a, car_t<U...> const& b) { return a.x != b || a.y != b; }
+        template<class...U> constexpr vec2<U...> operator+(const vec2<U...>& a, const vec2<U...>& b) { return { a.x + b.x, a.y + b.y }; }
+        template<class...U> constexpr vec2<U...> operator-(const vec2<U...>& a, const vec2<U...>& b) { return { a.x - b.x, a.y - b.y }; }
+        template<class...U> constexpr vec2<U...> operator*(const vec2<U...>& a, car_t<U...> const& b) { return { a.x * b, a.y * b }; }
+        template<class...U> constexpr vec2<U...> operator/(const vec2<U...>& a, car_t<U...> const& b) { return { a.x / b, a.y / b }; }
+        template<class...U> inline vec2<U...>& operator+=(vec2<U...>& a, const vec2<U...>& b) { a.x += b.x; a.y += b.y; return a; }
+        template<class...U> inline vec2<U...>& operator-=(vec2<U...>& a, const vec2<U...>& b) { a.x -= b.x; a.y -= b.y; return a; }
+        template<class...U> inline vec2<U...>& operator*=(vec2<U...>& a, car_t<U...> const& b) { a.x *= b; a.y *= b; return a; }
+        template<class...U> inline vec2<U...>& operator/=(vec2<U...>& a, car_t<U...> const& b) { a.x /= b; a.y /= b; return a; }
 
-        template<class T, class...Ks> vec<T, 2, Ks...> operator+(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) { return { a.x + b.x, a.y + b.y }; }
-        template<class T, class...Ks> vec<T, 2, Ks...>& operator+=(vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) { a.x += b.x; a.y += b.y; return a; }
-        template<class T, class...Ks> vec<T, 2, Ks...> operator-(const vec<T, 2, Ks...>& a, const vec<T, 2, Ks...>& b) { return { a.x - b.x, a.y - b.y }; }
+        template<class...U> constexpr bool operator==(vec3<U...> const& a, vec3<U...> const& b) { return a.x == b.x && a.y == b.y && a.z == b.z; }
+        template<class...U> constexpr bool operator==(vec3<U...> const& a, car_t<U...> const& b) { return a.x == b && a.y == b && a.z == b; }
+        template<class...U> constexpr bool operator!=(vec3<U...> const& a, vec3<U...> const& b) { return a.x != b.x || a.y != b.y || a.z != b.z; }
+        template<class...U> constexpr bool operator!=(vec3<U...> const& a, car_t<U...> const& b) { return a.x != b || a.y != b || a.z != b; }
+        template<class...U> constexpr vec3<U...> operator+(const vec3<U...>& a, const vec3<U...>& b) { return { a.x + b.x, a.y + b.y, a.z + b.z }; }
+        template<class...U> constexpr vec3<U...> operator-(const vec3<U...>& a, const vec3<U...>& b) { return { a.x - b.x, a.y - b.y, a.z - b.z }; }
+        template<class...U> constexpr vec3<U...> operator*(const vec3<U...>& a, car_t<U...> const& b) { return { a.x * b, a.y * b, a.z * b }; }
+        template<class...U> constexpr vec3<U...> operator/(const vec3<U...>& a, car_t<U...> const& b) { return { a.x / b, a.y / b, a.z / b }; }
+        template<class...U> inline vec3<U...>& operator+=(vec3<U...>& a, const vec3<U...>& b) { a.x += b.x; a.y += b.y; a.z += b.z; return a; }
+        template<class...U> inline vec3<U...>& operator-=(vec3<U...>& a, const vec3<U...>& b) { a.x -= b.x; a.y -= b.y; a.z -= b.z; return a; }
+        template<class...U> inline vec3<U...>& operator*=(vec3<U...>& a, car_t<U...> const& b) { a.x *= b; a.y *= b; a.z /= b; return a; }
+        template<class...U> inline vec3<U...>& operator/=(vec3<U...>& a, car_t<U...> const& b) { a.x /= b; a.y /= b; a.z /= b; return a; }
 
-        template<class T, class...Ks> vec<T, 2, Ks...> operator*(const vec<T, 2, Ks...>& a, int32_t b) { return { a.x * b, a.y * b }; }
-        template<class T, class...Ks> vec<T, 2, Ks...>& operator*=(vec<T, 2, Ks...>& a, int32_t b) { a.x *= b; a.y *= b; return a; }
+        template<class T, class U> size_t in_polygon_xy(T x, T y, size_t n, U const ps[])
+        {
+            if (n < 1)
+                return 0;
 
-        template<class T, class...Ks> vec<T, 2, Ks...> operator/(const vec<T, 2, Ks...>& a, int32_t b) { return { a.x / b, a.y / b }; }
-        template<class T, class...Ks> vec<T, 2, Ks...>& operator/=(vec<T, 2, Ks...>& a, int32_t b) { a.x /= b; a.y /= b; return a; }
+            auto bx = x - ps[n - 1].x;
+            auto by = y - ps[n - 1].y;
 
+            size_t w = 0;
+            for (size_t i = 0; i < n; ++i)
+            {
+                auto ax = bx;
+                auto ay = by;
+                bx = x - ps[i].x;
+                by = y - ps[i].y;
 
-        template<class T, class...Ks> vec<T, 3, Ks...> operator-(const vec<T, 3, Ks...>& a, const vec<T, 3, Ks...>& b) { return { a.x - b.x, a.y - b.y, a.z - b. z }; }
+                // ay && by have different signs?
+                if ((ay ^ by) < 0)
+                {
+                    auto ab = ax * by - ay * bx;
+
+                    // winding number, by && ab have diffent signs? +/- 1 depending on which side of line we are on, or 0 if we are on the line
+                    w += (by ^ ab) < 0 ? (ab > 0 ? 1 : 0) - (ab < 0 ? 1 : 0) : 0;
+
+                    // crossing number
+                    //w -= (by < 0 ? -d : d) < 0 ? -1 : 0;
+                }
+            }
+            return w;
+        }
+
+        template<class T, class U> size_t in_polygon(T const& p, size_t n, U const ps[])
+        {
+            return in_polygon_xy<decltype(dotx(p.x - ps[0].x, p.y - ps[0].y))>(p.x, p.y, n, ps);
+        }
+
     }
 
-    using namespace math;   
-    
+    using namespace math;
+
+
     namespace random
     {
         // http://prng.di.unimi.it/xoroshiro64starstar.c
@@ -508,7 +574,7 @@ namespace ce
         {
             uint32_t a;
             uint32_t b;
-            
+
             friend void seed(xoroshiro64ss& g, size_t size, uint8_t data[])
             {
                 auto a = crc32(crc32c_t::initial, size / 2, data);
@@ -531,22 +597,22 @@ namespace ce
 
     using namespace random;
 
-#if defined(CE_USER_CHECKED)
-    static_assert(detail::crc32_table<crc32c_t, 0>::vs[0] == 0, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 0>::vs[1] == 0xf26b8303, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 0>::vs[255] == 0xad7d5351, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 1>::vs[0] == 0, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 1>::vs[1] == 0x13a29877, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 1>::vs[255] == 0xa3e32483, "invalid crc32c value");
-    static_assert(detail::crc32_table<crc32c_t, 15>::vs[255] == 0x8fda7dfa, "invalid crc32c value");
-
-    static_assert(crc32(crc32c_t::initial, 1, items_v<uint64_t, 0x1234567812345678ull>) ==
-        crc32(crc32c_t::initial, 2, items_v<uint32_t, 0x12345678u, 0x12345678u>), "");
-
-    static_assert(crc32(crc32c_t::initial, 1, items_v<uint64_t, 0x1234567812345678ull>) ==
-        crc32(crc32c_t::initial, 8, items_v<uint8_t, 0x78, 0x56, 0x34, 0x12, 0x78, 0x56, 0x34, 0x12>), "");
-
-    static_assert(crc32c("The quick brown fox jumps over the lazy dog") == 0x22620404, "crc32c failed");
-    static_assert(crc32c("123456789") == 0xe3069283, "crc32c failed");
-#endif
 }
+
+//#define CE_USER_CHECKED
+#if defined(CE_USER_CHECKED)
+CE_STATIC_ASSERT(ce::detail::crc32_table<ce::crc32c_t, 0>::vs[0] == 0, "bad crc32c table entry");
+CE_STATIC_ASSERT(ce::detail::crc32_table<ce::crc32c_t, 0>::vs[1] == 0xf26b8303);
+CE_STATIC_ASSERT(ce::detail::crc32_table<ce::crc32c_t, 0>::vs[255] == 0xad7d5351);
+CE_STATIC_ASSERT(ce::detail::crc32_table<ce::crc32c_t, 1>::vs[0] == 0);
+CE_STATIC_ASSERT(ce::detail::crc32_table<ce::crc32c_t, 1>::vs[1] == 0x13a29877);
+CE_STATIC_ASSERT(ce::detail::crc32_table<ce::crc32c_t, 1>::vs[255] == 0xa3e32483);
+CE_STATIC_ASSERT(ce::detail::crc32_table<ce::crc32c_t, 15>::vs[255] == 0x8fda7dfa);
+
+CE_STATIC_ASSERT(ce::crc32(ce::crc32c_t::initial, 1, ce::items_v<ce::uint64_t, 0x1234567812345678ull>) == ce::crc32(ce::crc32c_t::initial, 2, ce::items_v<ce::uint32_t, 0x12345678u, 0x12345678u>));
+CE_STATIC_ASSERT(ce::crc32(ce::crc32c_t::initial, 1, ce::items_v<ce::uint64_t, 0x1234567812345678ull>) ==
+    ce::crc32(ce::crc32c_t::initial, 8, ce::items_v<ce::uint8_t, 0x78, 0x56, 0x34, 0x12, 0x78, 0x56, 0x34, 0x12>));
+
+CE_STATIC_ASSERT(ce::crc32c("The quick brown fox jumps over the lazy dog") == 0x22620404);
+CE_STATIC_ASSERT(ce::crc32c("123456789") == 0xe3069283);
+#endif
