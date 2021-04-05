@@ -11,6 +11,7 @@
 - critical type traits
 - `types<Ts...>` - list of types
 - `items<T, T...Ns>` - list of scalar values
+- `sequence_t<T, N>` - the type `items<T, T{ 0 }, T{ 1 }, ..., T{ N - 1 }>` using log N compile time recursion
 - `tuple<Ts...>` - basic tuple support, `box<T>`, `pair<T, U>`
 - `span<T>` - contiguous range of `T*`
 - `list<T, N>` - sized c-style array
