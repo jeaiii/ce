@@ -1,0 +1,12 @@
+{
+    "version": "5.0.0-beta1",
+    "action": "vs2019",
+    "packages": {
+        "googletest": {
+            "org": "google",
+            "version": "release-1.11.0",
+            "src": "googletest/src",
+            "h": "googletest/include"
+        }
+    }
+}
