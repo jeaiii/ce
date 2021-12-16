@@ -51,7 +51,7 @@ namespace ce
         T data[N];
 
         static size_t capacity() { return N; }
-        
+
         void reset()
         {
             size = 0;

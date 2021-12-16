@@ -1141,7 +1141,7 @@ namespace ce
     template<> struct measure<unsigned long> { static constexpr size_t value = sizeof(unsigned long) > sizeof(unsigned int) ? 20 : 10; };
     template<> struct measure<long long> { static constexpr size_t value = 20; };          // -9223372036854775808
     template<> struct measure<unsigned long long> { static constexpr size_t value = 20; }; // 18??????????????????
-    
+
     template<class...Ts> struct as_string
     {
         char as[measure<Ts...>::value + 1];
@@ -1193,7 +1193,7 @@ namespace ce
 
 #define CE_AS_NAMES_EX(N, NAMES) []{ static constexpr ce::names<sizeof(NAMES ""), N> _{ NAMES "" }; return _.data; }()
 
-    template<class...Ts> _declspec(noinline) void call_log_hook(int level, char const * const keys[], Ts const&...ts)
+    template<class...Ts> _declspec(noinline) void call_log_hook(int level, char const* const keys[], Ts const&...ts)
     {
         constexpr int argc = sizeof...(Ts);
         CE_LOG_HOOK(level, argc, ce::identity_t<char const* [argc + 1][2]>{ { *keys++, as_string{ ts }.as }..., { nullptr, nullptr } });
