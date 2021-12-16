@@ -14,10 +14,10 @@
 - `uint8_t`, `uint16_t`, `uint32_t`, `uint64_t`
 - `int8_t`, `int16_t`, `int32_t`, `int64_t` 
 #### critical type traits and templates
--  `types<Ts...>` - list of types
+- `types<Ts...>` - list of types
 - `items<T, T...Ns>` - list of scalar values
 - `sequence_t<T, N>` - the type `items<T, T{ 0 }, T{ 1 }, ..., T{ N - 1 }>` using log N compile time recursion
-#### fixed size contaners and span
+#### fixed size containers and view
 - `tuple<Ts...>` - basic tuple support, `box<T>`, `pair<T, U>`
 - `span<T>` - contiguous range of `T*`
 - `bulk<N, T>` - fixed sized container of [0, `N`) `T`'s
@@ -29,6 +29,16 @@
 - `fnv1a` - `constexpr` fnv hashing
 - `xoroshiro64ss` - easy, good, compact random number generator http://prng.di.unimi.it/xoroshiro64starstar.c
 - `base64` - `constexpr` base64 decode
+#### type to text conversion
+- `to_text()` - convert any typed value to text
+#### basic os functions
+- `debug_out()` - output to the debugger
+- `open_file()`
+- `close_file()`
+- `map_span()` - memory map a file as a `span`
+- `unmap_span()`
+- `virtual_alloc()`
+- `log()` - default logging hook to `debug_out`
 
 ### Macros
 - `CE_STATIC_ASSERT()` - pre c++17 static_assert with optional and better error messges
@@ -43,18 +53,21 @@
 - `CE_ERROR()`, `CE_ASSERT()`, `CE_VERIFY()`, and `CE_FAILED()` - runtime error checking
 - `CE_COUNTOF()` - compile time array extent
 - `CE_FOLD_LEFT_COMMA()` - pre c++17 left comma fold expression
-- `CE_LOG()` - structured logging
-- `CE_LOG_MSG()` - typesafe logging
-
+- `CE_LOG()` - user hookable structured logging: default example `CE_LOG(fail, time, money)` -> `F: { "$": "fail", "time": 42, "money": 1000000 }`
+- `CE_LOG_MSG()` - `CE_LOG_MSG(info, "The answer is ", 6 * 7)` -> `I: { "$": "info", "$msg": "The answer is 42" }`
 ### cdt.h
 - constrained delaunay triangulation with low memory footprint integer 
 ### dictionary.h
+- hash table
 ### io.h
+- reflection for struct serialization/deserialization
 ### lziii.h
 - `constexpr` lzss style compression
 ### math.h
 - more math...
 ### pool.h
+- object pool 
 ### sort.h
+- intro sort
 ### zorder.h
 - Morton Z ordering https://en.wikipedia.org/wiki/Z-order_curve
