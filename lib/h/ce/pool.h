@@ -34,8 +34,6 @@ namespace ce
 
         static_assert(index_t(N - 1) == N - 1, "");
 
-        // should allocate orders with a bitmap so they stay together for the most part?
-        // or is there a way to keep them contigous?
         // data[0] is unused
 
         enum class ptr_t : index_t { nil };

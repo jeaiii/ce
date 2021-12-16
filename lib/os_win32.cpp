@@ -67,8 +67,8 @@ namespace ce
 
 #define CE_TO_UTF16(DST, SRC) wchar_t const* DST; { auto _src = as_span(SRC); auto _dst = _alloca(_src.size * 2); to_utf16(static_cast<char16_t*>(_dst), _src.size, _src.data); DST = static_cast<wchar_t const*>(_dst); }
 
-	namespace os
-	{
+    namespace os
+    {
         void debug_out(char const text[])
         {
             CE_TO_UTF16(os_text, text);
