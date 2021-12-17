@@ -10,7 +10,7 @@
 ## Features
 ### ce.h
 #### basic types compatible with `std`
-- `uint_t`, `sizE_t`, `ptrdiff_t`
+- `uint_t`, `size_t`, `ptrdiff_t`
 - `uint8_t`, `uint16_t`, `uint32_t`, `uint64_t`
 - `int8_t`, `int16_t`, `int32_t`, `int64_t` 
 #### critical type traits and templates
@@ -53,8 +53,18 @@
 - `CE_ERROR()`, `CE_ASSERT()`, `CE_VERIFY()`, and `CE_FAILED()` - runtime error checking
 - `CE_COUNTOF()` - compile time array extent
 - `CE_FOLD_LEFT_COMMA()` - pre c++17 left comma fold expression
-- `CE_LOG()` - user hookable structured logging: default example `CE_LOG(fail, time, money)` -> `F: { "$": "fail", "time": 42, "money": 1000000 }`
-- `CE_LOG_MSG()` - `CE_LOG_MSG(info, "The answer is ", 6 * 7)` -> `I: { "$": "info", "$msg": "The answer is 42" }`
+- `CE_LOG(level, expressions...)` - user hookable structured logging
+- `CE_LOG_MSG(level, values...)` - user hookable message logging
+```
+    int time = 42;
+    int money = 1000000;
+    CE_LOG(fail, time, money);
+    CE_LOG_MSG(info, "The answer is ", 6 * 7, "!");
+```
+```
+    F: { "$": "fail", "time": "42", "money": "1000000" }
+    I: { "$": "info", "$msg": "The answer is 42!" }
+```
 ### cdt.h
 - constrained delaunay triangulation with low memory footprint integer 
 ### dictionary.h
