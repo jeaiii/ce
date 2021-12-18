@@ -1,16 +1,16 @@
 # ce - Common Environment for c++
 
-- supports clang, gcc, and msvc
-- supports x86 and WebAsm
-- 0 dependancies
-- header only core ce.h
+- supports clang, msvc, and gcc
+- supports x86, WebAssembly, and ARM (TODO)
 - non-allocating
 - good code generation in non-optimized builds
 
 ## Features
 ### ce.h
+- 0 depenacies
+- header only
 #### basic types compatible with `std`
-- `uint_t`, `size_t`, `ptrdiff_t`
+- `uint`, `size_t`, `ptrdiff_t`
 - `uint8_t`, `uint16_t`, `uint32_t`, `uint64_t`
 - `int8_t`, `int16_t`, `int32_t`, `int64_t` 
 #### critical type traits and templates
@@ -25,7 +25,7 @@
 - `vec<N, T, Ks...>` - small simd style vectors `N` = [0, 4] with optional unit tags `Ks...`
 - `sqrx()`, `dotx()`, and `crossx()` - operations on scalars and `vec`s which expand integer types by 2x bits
 - `in_polygon_xy()` and `in_polygon()` - generic point in polygon test (winding number) for types with `.x` & `.y` members
-- `crc32` - fast header only type safe `constexpr` 32 bit cyclic redundancy check
+- `crc32` - `constexpr` fast, header only, type safe  32 bit cyclic redundancy check
 - `fnv1a` - `constexpr` fnv hashing
 - `xoroshiro64ss` - easy, good, compact random number generator http://prng.di.unimi.it/xoroshiro64starstar.c
 - `base64` - `constexpr` base64 decode
