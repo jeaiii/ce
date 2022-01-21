@@ -1,6 +1,7 @@
 #define CE_USER_CHECKED
 #include "ce/ce.h"
 
+#include "ce/atomic.h"
 #include "ce/cdt.h"
 #include "ce/dictionary.h"
 #include "ce/io.h"
