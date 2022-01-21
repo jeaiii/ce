@@ -55,7 +55,7 @@ namespace ce
         else
         {
             T e = a.atom.load(std::memory_order_relaxed);
-            for (T n; !a.atom.compare_exchange_strong(e, (n = e) += v););
+            for (T n; !a.atom.compare_exchange_weak(e, (n = e) += v););
             return e;
         }
     }
@@ -69,7 +69,7 @@ namespace ce
         else
         {
             T e = a.atom.load(std::memory_order_relaxed);
-            for (T n; !a.atom.compare_exchange_strong(e, (n = e) -= v););
+            for (T n; !a.atom.compare_exchange_weak(e, (n = e) -= v););
             return e;
         }
     }
