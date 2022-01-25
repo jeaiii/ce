@@ -37,9 +37,8 @@ namespace ce
         // lock
         void construct_sync(lock&);
         void terminate_sync(lock&);
-
         void acquire_sync(lock&);
-        void try_acquire_sync(lock&);
+        bool try_acquire_sync(lock&);
         void release_sync(lock&);
     }
 }

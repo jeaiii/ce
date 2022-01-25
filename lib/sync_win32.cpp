@@ -35,7 +35,7 @@ namespace ce
         void construct_sync(lock& q) { InitializeSRWLock(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
         void terminate_sync(lock& q) { InitializeSRWLock(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
         void acquire_sync(lock& q) { AcquireSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
-        void try_acquire_sync(lock& q) { TryAcquireSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+        bool try_acquire_sync(lock& q) { return TryAcquireSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
         void release_sync(lock& q) { ReleaseSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
     }
 }

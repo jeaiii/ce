@@ -37,7 +37,7 @@ namespace ce
     template<class T> using atomic_val_t = decltype(*(T*)0 += T() - T(), T() - T());
     template<class T> using atomic_int_t = decltype(*(T*)0 ^= T() ^ T(), T() ^ T());
 
-    template<class T> atomic_mem_t<T> atomic_load(atomic<T>& a) { return a.atom.load(); }
+    template<class T> atomic_mem_t<T> atomic_load(atomic<T> const& a) { return a.atom.load(); }
     template<class T> void atomic_store(atomic<T>& a, atomic_mem_t<T> v) { return a.atom.store(v); }
     template<class T> T atomic_exchange(atomic<T>& a, atomic_mem_t<T> v) { return a.atom.exchange(v); }
     template<class T> bool atomic_compare_exchange(atomic<T>& a, T& expected, atomic_mem_t<T> v) { return a.atom.compare_exchange_strong(expected, v); }
