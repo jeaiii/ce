@@ -86,6 +86,11 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 
 //--------
 
+#define CE_OS_WIN32 0
+#define CE_OS_UNKNOWN 0
+#undef CE_OS_WIN32
+#define CE_OS_WIN32 1
+
 #define CE_CPU_X86_32 0
 #define CE_CPU_X86_64 0
 #define CE_CPU_X86 0
