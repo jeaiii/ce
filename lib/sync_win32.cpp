@@ -30,12 +30,18 @@ SOFTWARE.
 
 namespace ce
 {
-    namespace os
-    {
-        void construct_sync(lock& q) { InitializeSRWLock(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
-        void terminate_sync(lock& q) { InitializeSRWLock(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
-        void acquire_sync(lock& q) { AcquireSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
-        bool try_acquire_sync(lock& q) { return TryAcquireSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
-        void release_sync(lock& q) { ReleaseSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
-    }
+    void construct_mutex(thread_mutex& q) { InitializeSRWLock(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    void destroy_mutex(thread_mutex& q) { InitializeSRWLock(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    bool try_acquire_mutex(thread_mutex& q) { return TryAcquireSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    void acquire_mutex(thread_mutex& q) { AcquireSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    void release_mutex(thread_mutex& q) { ReleaseSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+
+    void construct_mutex(thread_shared_mutex& q) { InitializeSRWLock(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    void destroy_mutex(thread_shared_mutex& q) { InitializeSRWLock(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    bool try_acquire_mutex(thread_shared_mutex& q) { return TryAcquireSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    void acquire_mutex(thread_shared_mutex& q) { AcquireSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    void release_mutex(thread_shared_mutex& q) { ReleaseSRWLockExclusive(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    bool try_acquire_mutex_shared(thread_shared_mutex& q) { return TryAcquireSRWLockShared(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    void acquire_mutex_shared(thread_shared_mutex& q) { AcquireSRWLockShared(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
+    void release_mutex_shared(thread_shared_mutex& q) { ReleaseSRWLockShared(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
 }

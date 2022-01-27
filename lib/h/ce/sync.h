@@ -27,18 +27,28 @@ SOFTWARE.
 
 namespace ce
 {
-    namespace os
-    {
-
 #if CE_OS_WIN32
-        // non recursive thread lock
-        struct lock { void* opaque_values[1]{ }; }; // WIN32 SRWLOCK
+    struct thread_mutex { void* opaque_values[1]{ }; }; // WIN32 SRWLOCK
+    struct thread_shared_mutex { void* opaque_values[1]{ }; }; // WIN32 SRWLOCK
 #endif
-        // lock
-        void construct_sync(lock&);
-        void terminate_sync(lock&);
-        void acquire_sync(lock&);
-        bool try_acquire_sync(lock&);
-        void release_sync(lock&);
-    }
+
+    // non reentrant/recursive mutex for threads of a single process
+    void construct_mutex(thread_mutex&);
+    void destroy_mutex(thread_mutex&);
+
+    bool try_acquire_mutex(thread_mutex&);
+    void acquire_mutex(thread_mutex&);
+    void release_mutex(thread_mutex&);
+
+    // non reentrant/recursive shared mutex for threads of a single process ("reader/write lock")
+    void construct_mutex(thread_shared_mutex&);
+    void destroy_mutex(thread_shared_mutex&);
+
+    bool try_acquire_mutex(thread_shared_mutex&);
+    void acquire_mutex(thread_shared_mutex&);
+    void release_mutex(thread_shared_mutex&);
+
+    bool try_acquire_mutex_shared(thread_shared_mutex&);
+    void acquire_mutex_shared(thread_shared_mutex&);
+    void release_mutex_shared(thread_shared_mutex&);
 }

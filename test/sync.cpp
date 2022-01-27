@@ -2,19 +2,42 @@
 
 #include "gtest/gtest.h"
 
-ce::os::lock q;
 
-GTEST_TEST(sync, sync)
+GTEST_TEST(sync, thread_mutex)
 {
-    ce::os::construct_sync(q);
+    static ce::thread_mutex q;
 
-    ce::os::acquire_sync(q);
-    ce::os::release_sync(q);
+    ce::construct_mutex(q);
 
-    GTEST_EXPECT_TRUE(ce::os::try_acquire_sync(q));
-    ce::os::release_sync(q);
-    GTEST_EXPECT_TRUE(ce::os::try_acquire_sync(q));
+    ce::acquire_mutex(q);
+    ce::release_mutex(q);
 
-    ce::os::release_sync(q);
-    ce::os::terminate_sync(q);
+    GTEST_EXPECT_TRUE(ce::try_acquire_mutex(q));
+    ce::release_mutex(q);
+    GTEST_EXPECT_TRUE(ce::try_acquire_mutex(q));
+    ce::release_mutex(q);
+
+    ce::destroy_mutex(q);
+}
+
+GTEST_TEST(sync, thread_shared_mutex)
+{
+    static ce::thread_shared_mutex q;
+
+    ce::construct_mutex(q);
+
+    ce::acquire_mutex(q);
+    ce::release_mutex(q);
+
+    GTEST_EXPECT_TRUE(ce::try_acquire_mutex(q));
+    ce::release_mutex(q);
+    GTEST_EXPECT_TRUE(ce::try_acquire_mutex(q));
+    ce::release_mutex(q);
+
+    GTEST_EXPECT_TRUE(ce::try_acquire_mutex_shared(q));
+    ce::release_mutex_shared(q);
+    GTEST_EXPECT_TRUE(ce::try_acquire_mutex_shared(q));
+    ce::release_mutex_shared(q);
+
+    ce::destroy_mutex(q);
 }

@@ -49,30 +49,23 @@ namespace ce
     template<class T> T atomic_fetch_add(atomic<T>& a, atomic_val_t<T> v)
     {
         if constexpr (has_fetch_add<T>(0))
-        {
             return a.atom.fetch_add(v);
-        }
         else
-        {
-            T e = a.atom.load(std::memory_order_relaxed);
-            for (T n; !a.atom.compare_exchange_weak(e, (n = e) += v););
-            return e;
-        }
+            for (T e = a.atom.load(std::memory_order_relaxed);;)
+                if (T n = e; a.atom.compare_exchange_weak(e, n += v))
+                    return e;
     }
 
     template<class T> T atomic_fetch_sub(atomic<T>& a, atomic_val_t<T> v)
     {
         if constexpr (has_fetch_add<T>(0))
-        {
             return a.atom.fetch_sub(v);
-        }
         else
-        {
-            T e = a.atom.load(std::memory_order_relaxed);
-            for (T n; !a.atom.compare_exchange_weak(e, (n = e) -= v););
-            return e;
-        }
+            for (T e = a.atom.load(std::memory_order_relaxed);;)
+                if (T n = e; a.atom.compare_exchange_weak(e, n -= v))
+                    return e;
     }
+
 
     template<class T> T atomic_fetch_xor(atomic<T>& a, atomic_int_t<T> v) { return a.atom.fetch_xor(v); }
     template<class T> T atomic_fetch_and(atomic<T>& a, atomic_int_t<T> v) { return a.atom.fetch_and(v); }
