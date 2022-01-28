@@ -2,7 +2,7 @@
 /*
 MIT License
 
-Copyright(c) 2021 James Edward Anhalt III - https://github.com/jeaiii/dcdt
+Copyright(c) 2021 James Edward Anhalt III - https://github.com/jeaiii/ce
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

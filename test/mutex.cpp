@@ -1,9 +1,9 @@
-#include "ce/sync.h"
+#include "ce/mutex.h"
 
 #include "gtest/gtest.h"
 
 
-GTEST_TEST(sync, thread_mutex)
+GTEST_TEST(mutex, thread_mutex)
 {
     static ce::thread_mutex q;
 
@@ -20,7 +20,7 @@ GTEST_TEST(sync, thread_mutex)
     ce::destroy_mutex(q);
 }
 
-GTEST_TEST(sync, thread_shared_mutex)
+GTEST_TEST(mutex, thread_shared_mutex)
 {
     static ce::thread_shared_mutex q;
 

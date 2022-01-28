@@ -141,26 +141,24 @@ namespace ce
         // could do this with function overloads easily, but then extra funtion calls in debug...
         // could build this into ce::as_cast, but then need emmintrin.h everywhere and maybe MSVC will improve this
 
-        // a float that auto bit casts to a long
-        struct as_long_from_float
+        template<class As, class From> union atomic_as_cast { From from; As as; };
+
+        // bit cast as long from float
+        template<> union atomic_as_cast<long, float>
         {
-            float from;
-            operator long() const noexcept { return _mm_cvtsi128_si32(_mm_castps_si128(_mm_set_ss(from))); }
+            long as;
+            atomic_as_cast(float from) : as{ _mm_cvtsi128_si32(_mm_castps_si128(_mm_set_ss(from))) } { }
         };
 
-        // a long that auto bit casts to a float
-        struct as_float_from_long
+        // bit cast as float from long
+        template<> union atomic_as_cast<float, long>
         {
-            long from;
-            operator float() const noexcept { return _mm_cvtss_f32(_mm_castsi128_ps(_mm_cvtsi32_si128(from))); }
+            float as;
+            atomic_as_cast(long from) : as{ _mm_cvtss_f32(_mm_castsi128_ps(_mm_cvtsi32_si128(from))) } { }
         };
 
-        template<class T, class U> struct atomic_as_type { using type = T; };
-        template<> struct atomic_as_type<float, long> { using type = as_float_from_long; };
-        template<> struct atomic_as_type<long, float> { using type = as_long_from_float; };
-
-        template<class U> using as_atom = as_cast<typename atomic_as_type<atom_t<sizeof(U)>, U>::type, U>;
-        template<class U> using as_data = as_cast<typename atomic_as_type<U, atom_t<sizeof(U)>>::type, atom_t<sizeof(U)>>;
+        template<class U> using as_atom = atomic_as_cast<atom_t<sizeof(U)>, U>;
+        template<class U> using as_data = atomic_as_cast<U, atom_t<sizeof(U)>>;
 
         template<class T> using alu_t = decltype(T() - T());
         template<class T> using bit_t = decltype(T() ^ T());

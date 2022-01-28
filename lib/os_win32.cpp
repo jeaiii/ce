@@ -25,15 +25,9 @@ SOFTWARE.
 
 #include "ce/ce.h"
 
+#if CE_OS_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
-#pragma warning( push )
-#pragma warning ( disable : 4127 ) // conditional expression is constant
-#include "to_text_from_integer.h"
-#pragma warning( pop )
-
-#include <charconv>
 
 namespace ce
 {
@@ -165,38 +159,5 @@ namespace ce
             debug_out(" }\n");
         }
     }
-
-    char* to_text(char text[], char value) { text[0] = value; return text + 1; }
-
-    char* to_text(char text[], bool value)
-    {
-        text[0] = '#';
-        text[1] = '<';
-        text[2] = "FT"[value ? 1 : 0];
-        text[3] = '>';
-        return text + 4;
-    }
-
-    char* to_text(char text[], float value) { return std::to_chars(text, text + 32, value).ptr; }
-    char* to_text(char text[], double value) { return std::to_chars(text, text + 32, value).ptr; }
-
-    char* to_text(char text[], signed char i) { return jeaiii::to_text_from_integer(text, i); }
-    char* to_text(char text[], unsigned char i) { return jeaiii::to_text_from_integer(text, i); }
-    char* to_text(char text[], short i) { return jeaiii::to_text_from_integer(text, i); }
-    char* to_text(char text[], unsigned short i) { return jeaiii::to_text_from_integer(text, i); }
-    char* to_text(char text[], int i) { return jeaiii::to_text_from_integer(text, i); }
-    char* to_text(char text[], unsigned int i) { return jeaiii::to_text_from_integer(text, i); }
-    char* to_text(char text[], long i) { return jeaiii::to_text_from_integer(text, i); }
-    char* to_text(char text[], unsigned long i) { return jeaiii::to_text_from_integer(text, i); }
-    char* to_text(char text[], long long i) { return jeaiii::to_text_from_integer(text, i); }
-    char* to_text(char text[], unsigned long long i) { return jeaiii::to_text_from_integer(text, i); }
-
-    char* to_text(char text[], char const value[])
-    {
-        char* p = text;
-        for (size_t i = 0; value[i] != 0; ++i)
-            *p++ = value[i];
-        return p;
-    }
 }
-
+#endif

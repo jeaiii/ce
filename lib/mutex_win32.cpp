@@ -23,8 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ce/sync.h"
+#include "ce/mutex.h"
 
+#if CE_OS_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -45,3 +46,4 @@ namespace ce
     void acquire_mutex_shared(thread_shared_mutex& q) { AcquireSRWLockShared(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
     void release_mutex_shared(thread_shared_mutex& q) { ReleaseSRWLockShared(reinterpret_cast<SRWLOCK*>(q.opaque_values)); }
 }
+#endif

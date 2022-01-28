@@ -1055,9 +1055,6 @@ namespace ce
     //--------
     // unsafe conversion from value to text ((utf8, NOT null terminated)
 
-    char* to_text(char[], char);
-
-    char* to_text(char[], bool);
     char* to_text(char[], float);
     char* to_text(char[], double);
 
@@ -1073,7 +1070,36 @@ namespace ce
     char* to_text(char[], long);
     char* to_text(char[], long long);
 
-    char* to_text(char[], char const[]);
+    inline char* to_text(char text[], char value) { text[0] = value; return text + 1; }
+    inline char* to_text(char text[], bool value)
+    {
+        text[0] = '#';
+        text[1] = '<';
+        text[2] = "FT"[value ? 1 : 0];
+        text[3] = '>';
+        return text + 4;
+    }
+
+    inline char* to_text_p(char text[], char const value[])
+    {
+        char* p = text;
+        for (size_t i = 0; value[i] != 0; ++i)
+            *p++ = value[i];
+        return p;
+    }
+
+    template<class T> char* to_text_p(char text[], T const* value)
+    {
+        return to_text(to_text(to_text_p(text, "#<ptr "), size_t(value)), '>');
+    }
+
+    inline char* to_text_s(char text[], size_t n, char const value[])
+    {
+        char* p = text;
+        for (size_t i = 0; i < n && value[i] != 0; ++i)
+            *p++ = value[i];
+        return p;
+    }
 
     template<class...Ts> char* to_text(char text[], Ts const&...values) { return ((text = to_text(text, values)), ...); }
 
@@ -1082,22 +1108,22 @@ namespace ce
         if constexpr (is_enum<T>::value)
         {
             // unknown enum types as underlying type
-            return to_text(text, "#<enum ", as_cast{ value }.as, '>');
+            return to_text(to_text_p(text, "#<enum "), as_cast{ value }.as, '>');
         }
         else if constexpr (is_same<T, decltype(nullptr)>::value)
         {
             // special case nullptr_t
-            return to_text(text, "#<nil>");
+            return to_text_p(text, "#<nil>");
         }
         else if constexpr (is_ptr<T>::value)
         {
-            // unknown pointer types
-            return to_text(text, "#<ptr ", size_t(value), '>');
+            // pointer types
+            return value == nullptr ? to_text_p(text, "#<nil>") : to_text_p(text, value);
         }
         else
         {
             // unknown types, show address 
-            return to_text(text, "#<ref ", size_t(&value), '>');
+            return to_text(to_text(to_text_p(text, "#<ref "), size_t(&value)), '>');
         }
     }
 
@@ -1114,7 +1140,10 @@ namespace ce
 
     template<size_t N, class T> char* to_text(char text[], T const (&values)[N])
     {
-        return to_text_n(text, N, &values[0]);
+        if constexpr (is_same_v<T, char>)
+            return to_text_s(text, N, &values[0]);
+        else
+            return to_text_n(text, N, &values[0]);
     }
 
     template<size_t N, class...U> char* to_text(char text[], vec<N, U...> const& value)

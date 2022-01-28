@@ -7,6 +7,7 @@
 #include "ce/io.h"
 #include "ce/lziii.h"
 #include "ce/math.h"
+#include "ce/mutex.h"
 #include "ce/pool.h"
 #include "ce/sort.h"
 #include "ce/zorder.h"
@@ -42,14 +43,16 @@ GTEST_TEST(ce, main)
     CE_LOG(to_text, float(10.5), double(100.5));
     CE_LOG(to_text, colors::red, colors::green, colors::blue);
 
-    int* ip = &a;
+    int* ip = nullptr;// &a;
 
     ce::vec2<int> v2{ 0, 1 };
     ce::vec3<int> v3{ 0, 1, 2 };
 
     CE_LOG(text, v2);
 
-    CE_LOG(to_text, nullptr, ip, v2, v3);
+    struct mine { };
+
+    CE_LOG(to_text, nullptr, ip, v2, v3, mine{ });
 
     CE_LOG_MSG(messages, "Hello", ", ", "Earth ", a);
 
