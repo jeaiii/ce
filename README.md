@@ -23,7 +23,7 @@
 - `bulk<N, T>` - fixed sized container of [0, `N`) `T`'s
 #### simd style vectors and math utlities
 - `vec<N, T, Ks...>` - small simd style vectors `N` = [0, 4] with optional unit tags `Ks...`
-- `sqrx()`, `dotx()`, and `crossx()` - operations on scalars and `vec`s which expand integer types by 2x bits
+- `sqrx()`, `dotx()`, and `crossx()` - operations on scalars and `vec`'s which expand types by 2x bits
 - `in_polygon_xy()` and `in_polygon()` - generic point in polygon test (winding number) for types with `.x` & `.y` members
 - `crc32` - `constexpr` fast, header only, type safe  32 bit cyclic redundancy check
 - `fnv1a` - `constexpr` fnv hashing
@@ -65,6 +65,8 @@
     F: { "$": "fail", "time": "42", "money": "1000000" }
     I: { "$": "info", "$msg": "The answer is 42!" }
 ```
+### atomic.h
+- ultra low overhead atomics similar to `std::atomic<T>`, but using refernce parameters and minimal function call depth for good debug and optimal release codegen
 ### cdt.h
 - constrained delaunay triangulation with low memory footprint integer 
 ### dictionary.h
@@ -79,5 +81,7 @@
 - object pool 
 ### sort.h
 - intro sort
+### sync.h
+- `thread_mutex` and `thread_shared_mutex`
 ### zorder.h
 - Morton Z ordering https://en.wikipedia.org/wiki/Z-order_curve
