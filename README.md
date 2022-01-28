@@ -30,7 +30,8 @@
 - `xoroshiro64ss` - easy, good, compact random number generator http://prng.di.unimi.it/xoroshiro64starstar.c
 - `base64` - `constexpr` base64 decode
 #### type to text conversion
-- `to_text()` - convert any typed value to text
+- `to_text(char *, Ts...)` - convert any typed value to text (non terminated utf-8)
+- `as_string` - form a fixed size null terminated array of utf-8 chars "inline"
 #### basic os functions
 - `debug_out()` - output to the debugger
 - `open_file()`
@@ -66,7 +67,7 @@
     I: { "$": "info", "$msg": "The answer is 42!" }
 ```
 ### atomic.h
-- ultra low overhead atomics similar to `std::atomic<T>`, but using refernce parameters and minimal function call depth for good debug and optimal release codegen
+- ultra low overhead atomics similar to `std::atomic<T>`, but using reference parameters and minimal function call depth for optimal debug and release codegen
 ### cdt.h
 - constrained delaunay triangulation with low memory footprint integer 
 ### dictionary.h
@@ -77,11 +78,11 @@
 - `constexpr` lzss style compression
 ### math.h
 - more math...
+### mutex.h
+- `thread_mutex` and `thread_shared_mutex`
 ### pool.h
 - object pool 
 ### sort.h
 - intro sort
-### sync.h
-- `thread_mutex` and `thread_shared_mutex`
 ### zorder.h
 - Morton Z ordering https://en.wikipedia.org/wiki/Z-order_curve
