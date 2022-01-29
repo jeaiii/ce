@@ -106,7 +106,6 @@ namespace ce
         template<class U> static constexpr bool test_can_user_xor(decltype(operator^(U(), U()), 0)) { return true; }
 
         template<class T> constexpr bool can_cpu_sub = test_can_sub<T>(0) && !test_can_user_sub<T>(0);
-        template<class T> constexpr bool can_cpu_add = test_can_sub<T>(0) && !test_can_user_add<T>(0);
         template<class T> constexpr bool can_cpu_xor = test_can_xor<T>(0) && !test_can_user_xor<T>(0);
 
         template<class T> struct info
@@ -122,20 +121,14 @@ namespace ce
             static constexpr bool is_m64 = size == 8;
             static constexpr bool is_m128 = size == 16;
 
-            static constexpr bool is_n8 = is_m8 && is_cpu;
-            static constexpr bool is_n16 = is_m16 && is_cpu;
-            static constexpr bool is_n32 = is_m32 && is_cpu;
-            static constexpr bool is_n64 = is_m64 && is_cpu;
-            static constexpr bool is_n128 = is_m128 && is_cpu;
-
-            static constexpr bool is_i8 = is_n8 && !is_fpu;
-            static constexpr bool is_i16 = is_n16 && !is_fpu;
-            static constexpr bool is_i32 = is_n32 && !is_fpu;
-            static constexpr bool is_i64 = is_n64 && !is_fpu;
-            static constexpr bool is_i128 = is_n128 && !is_fpu;
+            static constexpr bool is_i8 = is_m8 && is_cpu && !is_fpu;
+            static constexpr bool is_i16 = is_m16 && is_cpu && !is_fpu;
+            static constexpr bool is_i32 = is_m32 && is_cpu && !is_fpu;
+            static constexpr bool is_i64 = is_m64 && is_cpu && !is_fpu;
+            static constexpr bool is_i128 = is_m128 && is_cpu && !is_fpu;
         };
 
-        // MSVC does really well with using a union to bitcast between types
+        // MSVC does really well with using a union to bit cast between types
         // except for float <-> int where it always goes through memory (__builtin_bit_cast has this same problem)
         // so use sse intrinsics to make it use register <-> sse register instructions
         // could do this with function overloads easily, but then extra funtion calls in debug...
@@ -160,10 +153,9 @@ namespace ce
         template<class U> using as_atom = atomic_as_cast<atom_t<sizeof(U)>, U>;
         template<class U> using as_data = atomic_as_cast<U, atom_t<sizeof(U)>>;
 
-        template<class T> using alu_t = decltype(T() - T());
-        template<class T> using bit_t = decltype(T() ^ T());
-        template<class T> using mem_t = decltype(T());
         template<class T> using arg_t = cond_t<sizeof(T) <= 8, T, T const&>;
+        template<class T> using alu_t = arg_t<decltype(T() - T())>;
+        template<class T> using bit_t = arg_t<decltype(T() ^ T())>;
 
         namespace public_atomic
         {
@@ -246,7 +238,7 @@ namespace ce
                 }
             }
 
-            template<class T> inline T atomic_fetch_add(atomic<T>& a, arg_t<alu_t<T>> n) noexcept
+            template<class T> inline T atomic_fetch_add(atomic<T>& a, alu_t<T> n) noexcept
             {
                 if constexpr (info<T>::is_i8)
                     return as_data<T>{ _InterlockedExchangeAdd8(&a.atom, as_atom<T>{ T{ } + n }.as) }.as;
@@ -284,7 +276,7 @@ namespace ce
                 }
             }
 
-            template<class T> inline T atomic_fetch_sub(atomic<T>& a, arg_t<alu_t<T>> n) noexcept
+            template<class T> inline T atomic_fetch_sub(atomic<T>& a, alu_t<T> n) noexcept
             {
                 if constexpr (info<T>::is_i8)
                     return as_data<T>{ _InterlockedExchangeAdd8(&a.atom, as_atom<T>{ T{ } - n }.as) }.as;
