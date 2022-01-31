@@ -131,7 +131,7 @@ namespace ce
         // MSVC does really well with using a union to bit cast between types
         // except for float <-> int where it always goes through memory (__builtin_bit_cast has this same problem)
         // so use sse intrinsics to make it use register <-> sse register instructions
-        // could do this with function overloads easily, but then extra funtion calls in debug...
+        // could do this with function overloads easily, but then extra function calls in debug...
         // could build this into ce::as_cast, but then need emmintrin.h everywhere and maybe MSVC will improve this
 
         template<class As, class From> union atomic_as_cast { From from; As as; };
@@ -163,6 +163,11 @@ namespace ce
             {
                 T data;
                 atom_t<sizeof(T)> volatile atom;
+
+                atomic(const T& v) : data{ v } { };
+                atomic() = default;
+                atomic(const atomic&) = delete;
+                atomic& operator=(const atomic&) = delete;
             };
 
             template<class T> inline T atomic_load(atomic<T> const& a) noexcept

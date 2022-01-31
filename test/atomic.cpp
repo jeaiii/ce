@@ -6,13 +6,23 @@ ce::atomic<int> ai;
 ce::atomic<float> af;
 ce::atomic<int*> ap;
 
-ce::atomic<int> ceii{ 5 };
-std::atomic<int> stdi{ 5 };
+ce::atomic<int> cei0;
+ce::atomic<int> cei1{ };
+ce::atomic<int> cei2{ 5 };
+ce::atomic<int> cei3 = { 5 };
+ce::atomic<int> cei4 = 5; // wouldn't mind if this was disabled
+
+std::atomic<int> scei0;
+std::atomic<int> scei1{ };
+std::atomic<int> scei2{ 5 };
+std::atomic<int> scei3 = { 5 };
+std::atomic<int> scei4 = 5;
 
 GTEST_TEST(atomic, atomic)
 {
-
-    //ceii = ai;
+    //cei3 = ce::atomic<int>{ 5 };
+    //cei0 = ai.data;
+    //scei0 = { 5 };
 
     ce::atomic_store(ai, 0);
 
