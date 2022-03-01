@@ -24,3 +24,40 @@ GTEST_TEST(math, inside)
     GTEST_EXPECT_TRUE(!ce::inside(v10, v01));
     GTEST_EXPECT_TRUE(!ce::inside(v10, v00));
 }
+
+GTEST_TEST(math, isqrt)
+{
+    volatile int32_t x = 0x01234567;
+    auto xx = ce::sqrx(x);
+    int32_t ix = ce::isqrt(xx);
+    EXPECT_EQ(x, ix);
+}
+
+GTEST_TEST(math, cordic)
+{
+    EXPECT_EQ(ce::polar_ang(100, 0), ce::angle::_0);
+    EXPECT_EQ(ce::polar_ang(100, 100), ce::angle::_45);
+    EXPECT_EQ(ce::polar_ang(0, 100), ce::angle::_90);
+    EXPECT_EQ(ce::polar_ang(-100, 100), ce::angle::_135);
+
+    // these return negative rotations, reduced rotations are [-180, 180)
+    EXPECT_EQ(ce::polar_ang(-100, 0), -ce::angle::_180);
+    EXPECT_EQ(ce::polar_ang(-100, -100), -ce::angle::_135);
+    EXPECT_EQ(ce::polar_ang(0, -100), -ce::angle::_90);
+    EXPECT_EQ(ce::polar_ang(100, -100), -ce::angle::_45);
+
+    EXPECT_EQ(ce::polar_mag(300, 400), 500);
+}
+
+
+GTEST_TEST(math, degrees_to_angle)
+{
+    EXPECT_EQ(ce::angle::_0, ce::degrees_to_angle(0));
+    EXPECT_EQ(ce::angle::_45, ce::degrees_to_angle(45));
+    EXPECT_EQ(ce::angle::_90, ce::degrees_to_angle(90));
+    EXPECT_EQ(ce::angle::_135, ce::degrees_to_angle(135));
+    EXPECT_EQ(-ce::angle::_180, ce::degrees_to_angle(-180));
+    EXPECT_EQ(-ce::angle::_135, ce::degrees_to_angle(-135));
+    EXPECT_EQ(-ce::angle::_90, ce::degrees_to_angle(-90));
+    EXPECT_EQ(-ce::angle::_45, ce::degrees_to_angle(-45));
+}

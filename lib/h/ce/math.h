@@ -213,13 +213,18 @@ namespace ce
 
 #if CE_CPU_X86
 
+        inline int32_t isqrt(int64_t v)
+        {
+            return _mm_cvtsd_si32(_mm_sqrt_sd(_mm_setzero_pd(), _mm_cvtsi64_sd(_mm_setzero_pd(), v)));
+            //return _mm_cvtsd_si32(_mm_sqrt_sd(_mm_setzero_pd(), _mm_set1_pd(double(v))));
+            //return _mm_cvtss_si32(_mm_sqrt_ss(_mm_cvtsi64_ss(_mm_setzero_ps(), v)));
+        }
+
         inline int32_t hypot(int32_t x, int32_t y)
         {
-#if 1
-            return _mm_cvtss_si32(_mm_sqrt_ss(_mm_cvtsi64_ss(_mm_setzero_ps(), int64_t(x) * x + int64_t(y) * y)));
-#else
-            return _mm_cvtsd_si32(_mm_sqrt_sd(_mm_setzero_pd(), _mm_set1_pd(x * double(x) + y * double(y))));
-#endif
+            return _mm_cvtsd_si32(_mm_sqrt_sd(_mm_setzero_pd(), _mm_cvtsi64_sd(_mm_setzero_pd(), int64_t(x) * x + int64_t(y) * y)));
+            //return _mm_cvtsd_si32(_mm_sqrt_sd(_mm_setzero_pd(), _mm_set1_pd(x * double(x) + y * double(y))));
+            //return _mm_cvtss_si32(_mm_sqrt_ss(_mm_cvtsi64_ss(_mm_setzero_ps(), int64_t(x) * x + int64_t(y) * y)));
         }
 
         template<class...U>
@@ -358,12 +363,15 @@ namespace ce
 
                 if (x < 0)
                 {
+                    // rotate 180
                     x = -x;
+                    y = -y;
+
 
                     if (y < 0)
-                        z -= 0x2000000000000000ll;
+                        z += 0x4000000000000000ll;
                     else
-                        z += 0x2000000000000000ll;
+                        z -= 0x4000000000000000ll;
                 }
 
                 for (size_t i = 0; i < 32; ++i)
@@ -382,6 +390,7 @@ namespace ce
                 x0 = int((x + 0x0000000080000000ll) >> 32);
                 // y should be 0
                 z0 = int((z + 0x0000000080000000ll) >> 32);
+
                 return { x0, z0 };
             }
 
@@ -405,6 +414,8 @@ namespace ce
     // return atan2(y, x) / (2pi)
     inline int32_t atan2_2pi(int32_t y, int32_t x) { return cordic::vector(x, y, 0).y; };
 
+
+    constexpr int32_t degrees_to_angle(int32_t d) { return int32_t(int64_t(d) * angle::_45 / 45); }
 
     using namespace math;
 }
