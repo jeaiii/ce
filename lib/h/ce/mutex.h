@@ -1,3 +1,5 @@
+#pragma once
+/*
 MIT License
 
 Copyright(c) 2021 James Edward Anhalt III - https://github.com/jeaiii/ce
@@ -19,3 +21,34 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+*/
+
+#include "ce.h"
+
+namespace ce
+{
+#if CE_OS_WIN32
+    struct thread_mutex { void* opaque_values[1]{ }; }; // WIN32 SRWLOCK
+    struct thread_shared_mutex { void* opaque_values[1]{ }; }; // WIN32 SRWLOCK
+#endif
+
+    // non reentrant/recursive mutex for threads of a single process
+    void construct_mutex(thread_mutex&);
+    void destroy_mutex(thread_mutex&);
+
+    bool try_acquire_mutex(thread_mutex&);
+    void acquire_mutex(thread_mutex&);
+    void release_mutex(thread_mutex&);
+
+    // non reentrant/recursive shared mutex for threads of a single process ("reader/write lock")
+    void construct_mutex(thread_shared_mutex&);
+    void destroy_mutex(thread_shared_mutex&);
+
+    bool try_acquire_mutex(thread_shared_mutex&);
+    void acquire_mutex(thread_shared_mutex&);
+    void release_mutex(thread_shared_mutex&);
+
+    bool try_acquire_mutex_shared(thread_shared_mutex&);
+    void acquire_mutex_shared(thread_shared_mutex&);
+    void release_mutex_shared(thread_shared_mutex&);
+}
