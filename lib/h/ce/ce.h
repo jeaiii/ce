@@ -1206,15 +1206,39 @@ namespace ce
                 while (*src <= ' ' && *src != '\0')
                     ++src;
 
-                size_t j = i;
+                // if we are at the last data item, start unbalanced so we copy the whole string (
+                int balance = &name - data + 1 == COUNT ? 1 : 0;
+                char quote = 0;
+                bool escape = false;
+                size_t trim = i;
 
-                // copy until comma or eos
-                while (*src != ',' && *src != '\0')
-                    text[i++] = *src++;
+                // copy until comma (with balanced ()[]{} and not in a string or char) or eos
+                while (*src != '\0')
+                {    
+                    if (quote == 0)
+                    {
+                        if (*src == ',' && balance == 0)
+                            break;
+                        else if (*src == '"' || *src == '\'')
+                            quote = *src;
+                        else if (*src == '(' || *src == '[' || *src == '{')
+                            balance += 1;
+                        else if (*src == ')' || *src == ']' || *src == '}')
+                            balance -= 1;
+                    }
+                    else if (escape)
+                        escape = false;
+                    else if (*src == '\\')
+                        escape = true;
+                    else if (*src == quote)
+                        quote = 0;
+
+                    if ((text[i++] = *src++) > ' ')
+                        trim = i;
+                }
 
                 // trim tailing spaces
-                while (i > j && text[i - 1] <= ' ')
-                    --i;
+                i = trim;
 
                 text[i] = '\0';
 
