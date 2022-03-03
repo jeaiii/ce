@@ -60,6 +60,9 @@ GTEST_TEST(ce, main)
     CE_LOG_EX(7, "1", 1, 2);
 
     CE_LOG_MSG(info, "hello = ", 42);
+
+    CE_LOG(info, (4, "hello(\", j" ",", 5, "world"), (35));
+    CE_LOG(info, (ce::vec2<int32_t, void>{ 1, 3 })        ,      ce::vec2<int32_t, void>{ 2, 5 });
 }
 
 GTEST_TEST(ce, bulk_simple)
