@@ -185,3 +185,51 @@ GTEST_TEST(ce, bulk_complex)
     }
     GTEST_EXPECT_TRUE(test::big::stats.expect(5, 6, 0, 0, 0, 1));
 }
+
+GTEST_TEST(ce, random64)
+{
+    constexpr uint8_t data[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+
+    ce::random::xoroshiro64ss g;
+    seed(g, CE_COUNTOF(data), data);
+
+
+    int32_t counts[16]{ };
+    for (size_t i = 0; i < 1024 * 16; ++i)
+        counts[next(g) % 16] += 1;
+
+    int32_t sos = 0;
+    for (auto c : counts) sos += (c - 1024) * (c - 1024);
+
+    EXPECT_LT(sos, 256 * 256 * 3 / 8);
+
+}
+
+GTEST_TEST(ce, random128)
+{
+    constexpr uint8_t data[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+
+    ce::random::xoroshiro128pp g;
+    seed(g, CE_COUNTOF(data), data);
+
+
+    int32_t counts[16]{ };
+    for (size_t i = 0; i < 1024 * 16; ++i)
+        counts[next(g) % 16] += 1;
+
+    int lo = counts[0];
+    int hi = counts[0];
+    int32_t sos = 0;
+    for (auto c : counts)
+    {
+        if (c < lo) lo = c;
+        if (c > hi) hi = c;
+
+        sos += (c - 1024) * (c - 1024);
+    }
+
+    CE_LOG(random128, lo, hi);
+
+    EXPECT_LT(sos, 256 * 256 * 3 / 8);
+
+}

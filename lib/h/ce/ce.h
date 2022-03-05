@@ -940,13 +940,14 @@ namespace ce
 
     namespace random
     {
+        // 64 bit state - 32 bit result
         // http://prng.di.unimi.it/xoroshiro64starstar.c
         struct xoroshiro64ss
         {
             uint32_t a;
             uint32_t b;
 
-            friend void seed(xoroshiro64ss& g, size_t size, uint8_t data[])
+            friend void seed(xoroshiro64ss& g, size_t size, uint8_t const data[])
             {
                 auto a = crc32(crc32c_t::initial, size / 2, data);
                 auto b = crc32(a, size - size / 2, data + size / 2);
@@ -955,7 +956,7 @@ namespace ce
                 g.b = uint32_t(b);
             }
 
-            friend uint32_t next32(xoroshiro64ss& g)
+            friend uint32_t next(xoroshiro64ss& g)
             {
                 const uint32_t a = g.a;
                 const uint32_t b = g.b ^ a;
@@ -963,6 +964,46 @@ namespace ce
                 g.b = CE_ROTL32(b, 13);
                 return CE_ROTL32(a * 0x9e3779bb, 5) * 5;
             }
+
+            friend uint32_t next32(xoroshiro64ss& g) { return next(g); }
+            friend uint64_t next64(xoroshiro64ss& g)
+            {
+                uint64_t a = next32(g);
+                return (a << 32) | next32(g);
+            }
+
+        };
+
+        // 128 bit state - 64 bit result
+        // https://prng.di.unimi.it/xoroshiro128plusplus.c
+        struct xoroshiro128pp
+        {
+            uint64_t a;
+            uint64_t b;
+
+            friend void seed(xoroshiro128pp& g, size_t size, uint8_t const data[])
+            {
+                g.a = ce::hash::fnv1a64(size, data);
+                g.b = ce::hash::fnv1a64(size, data, g.a);
+            }
+
+            static inline uint64_t rotl(const uint64_t x, int k) {
+                return (x << k) | (x >> (64 - k));
+            }
+
+            friend uint64_t next(xoroshiro128pp& g)
+            {
+                uint64_t a = g.a;
+                uint64_t b = g.b;
+                uint64_t c = a ^ b;
+                g.a = rotl(a, 49) ^ c ^ (c << 21);
+                g.b = rotl(c, 28);
+                return rotl(a + b, 17) + a;
+            }
+
+            friend uint32_t next32(xoroshiro128pp& g) { return uint32_t(next(g)); }
+            friend uint64_t next64(xoroshiro128pp& g) { return next(g); }
+
         };
     }
 
