@@ -432,6 +432,25 @@ namespace ce
         return head;
     }
 
+    template<class T> size_t assign_items(size_t dst_size, T dst_data[], size_t src_size, T const src_data[])
+    {
+        if (dst_size < src_size)
+        {
+            for (size_t i = 0; i < dst_size; ++i)
+                dst_data[i] = src_data[i];
+            for (size_t i = dst_size; i < src_size; ++i)
+                CE_CONSTRUCT_AT(dst_data + i) T(src_data[i]);            
+        }
+        else
+        {
+            for (size_t i = 0; i < src_size; ++i)
+                dst_data[i] = src_data[i];
+            for (size_t i = src_size; i < dst_size; ++i)
+                CE_DESTROY_AT(dst_data + i) ~T();
+        }
+        return src_size;
+    }
+
     template<size_t N, class T> struct bulk
     {
         size_t size;
@@ -440,11 +459,17 @@ namespace ce
         bulk() : size{ }, d0{ } { }
         ~bulk() { destroy_at(data, 0, size); }
 
-        // TODO: jea
-        bulk(bulk const&) = delete;
-        bulk(bulk&&) = delete;
-        bulk& operator=(bulk const&) = delete;
-        bulk& operator=(bulk&&) = delete;
+        bulk(bulk const& b)
+        {
+            for (size_t i = 0; i < b.size; ++i)
+                CE_CONSTRUCT_AT(&data[i]) T(b.data[i]);
+            size = b.size;
+        }
+
+        bulk& operator=(bulk const& b) { size = assign_items(size, data, b.size, b.data); return *this; }
+        
+        //bulk(bulk&&) = delete;
+        //bulk& operator=(bulk&&) = delete;
 
         static size_t capacity() { return N; }
 
@@ -489,6 +514,8 @@ namespace ce
             auto back = size - 1;
             if (back != i)
                 data[i] = static_cast<T&&>(data[back]);
+            else
+                CE_DESTROY_AT(data + back) ~T();
 
             size = back;
 
@@ -499,65 +526,8 @@ namespace ce
         friend span<T const> make_span(bulk const& c) { return { c.size, &c.data[0] }; }
     };
 
-
-    template<class T, size_t N> struct list
-    {
-        size_t size;
-        union { T data[N]; };
-
-        list() : size{ } { }
-
-        static size_t capacity() { return N; }
-        T* begin() { return &data[0]; }
-        T* end() { return &data[size]; }
-
-        T const* begin() const { return &data[0]; }
-        T const* end() const { return &data[size]; }
-
-        T& operator[](size_t i) { return data[i]; }
-        T const& operator[](size_t i) const { return data[i]; }
-
-        template<class...Us>
-        bool append(Us&&...us)
-        {
-            if (size < N)
-                return new (reinterpret_cast<detail::new_tag*>(&data[size])) T{ static_cast<Us>(us)... }, ++size, true;
-            return false;
-        }
-
-        friend span<T> make_span(list& c) { return { c.size, &c.data[0] }; }
-        friend span<T const> make_span(list const& c) { return { c.size, &c.data[0] }; }
-    };
-
-    // temp...don't use this...
-    template<class T, size_t N> struct blob_list
-    {
-        size_t size;
-        struct blob { alignas(T) char data[sizeof(T)]; };
-        blob data[N];
-
-        static size_t capacity() { return N; }
-        T* begin() { return reinterpret_cast<T*>(&data[0]); }
-        T* end() { return reinterpret_cast<T*>(&data[size]); }
-
-        T const* begin() const { return reinterpret_cast<T const*>(&data[0]); }
-        T const* end() const { return reinterpret_cast<T const*>(&data[size]); }
-
-        T& operator[](size_t i) { return *reinterpret_cast<T*>(&data[i]); }
-        T const& operator[](size_t i) const { return *reinterpret_cast<T const*>(&data[i]); }
-
-        template<class...Us>
-        bool append(Us&&...us)
-        {
-            if (size < N)
-                return new (reinterpret_cast<detail::new_tag*>(&data[size])) T{ static_cast<Us>(us)... }, ++size, true;
-            return false;
-        }
-
-        friend span<T> make_span(blob_list& c) { return { c.size, reinterpret_cast<T*>(&c.data[0]) }; }
-        friend span<T const> make_span(blob_list const& c) { return { c.size, reinterpret_cast<T const*>(&c.data[0]) }; }
-    };
-
+    template<class T, size_t N> using list = bulk<N, T>;
+    
     template<class T> void heap_raise(T data[], T item, size_t n)
     {
         while (n > 0)

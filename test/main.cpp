@@ -175,6 +175,10 @@ GTEST_TEST(ce, bulk_complex)
         GTEST_EXPECT_TRUE(b.size == 2);
         GTEST_EXPECT_TRUE(test::big::stats.expect(0, 3, 0, 0, 0, 1));
 
+        GTEST_EXPECT_TRUE(b.remove_at(1));
+        GTEST_EXPECT_TRUE(b.size == 1);
+        GTEST_EXPECT_TRUE(test::big::stats.expect(1, 3, 0, 0, 0, 1));
+
         b.clear();
         GTEST_EXPECT_TRUE(b.size == 0);
         GTEST_EXPECT_TRUE(test::big::stats.expect(2, 3, 0, 0, 0, 1));
