@@ -475,6 +475,18 @@ namespace ce
 
         void clear() { size = destroy_at(data, 0, size); }
 
+        // tries to set the size to `n`
+        // fails returning false if `n' > capacity
+        bool resize(size_t n)
+        {
+            if (n > N)
+                return false;
+
+            size = n <= size ? destroy_at(data, n, size) : construct_at(data, size, n);
+            return true;
+        }
+
+
         size_t room() const { return N - size; }
 
         T* begin() { return &data[0]; }

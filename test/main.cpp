@@ -183,9 +183,18 @@ GTEST_TEST(ce, bulk_complex)
         GTEST_EXPECT_TRUE(b.size == 0);
         GTEST_EXPECT_TRUE(test::big::stats.expect(2, 3, 0, 0, 0, 1));
 
-        b.append_n(3);
+        GTEST_EXPECT_TRUE(b.append_n(3));
         GTEST_EXPECT_TRUE(b.size == 3);
         GTEST_EXPECT_TRUE(test::big::stats.expect(2, 6, 0, 0, 0, 1));
+
+        GTEST_EXPECT_FALSE(b.append_n(3));
+        GTEST_EXPECT_TRUE(b.size == 3);
+
+        GTEST_EXPECT_TRUE(b.resize(2));
+        GTEST_EXPECT_TRUE(b.size == 2);
+
+        GTEST_EXPECT_FALSE(b.resize(6));
+        GTEST_EXPECT_TRUE(b.size == 2);
     }
     GTEST_EXPECT_TRUE(test::big::stats.expect(5, 6, 0, 0, 0, 1));
 }
