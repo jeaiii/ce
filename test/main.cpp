@@ -67,7 +67,7 @@ GTEST_TEST(ce, main)
 
 GTEST_TEST(ce, bulk_simple)
 {
-    ce::bulk<3, int> b;
+    ce::bulk<4, int> b;
 
     GTEST_EXPECT_TRUE(b.size == 0);
 
@@ -81,8 +81,20 @@ GTEST_TEST(ce, bulk_simple)
     GTEST_EXPECT_TRUE(b.append(3));
     GTEST_EXPECT_TRUE(b.size == 3);
 
-    GTEST_EXPECT_FALSE(b.append(4));
-    GTEST_EXPECT_TRUE(b.size == 3);
+    GTEST_EXPECT_TRUE(b.append(4));
+    GTEST_EXPECT_TRUE(b.size == 4);
+
+    GTEST_EXPECT_FALSE(b.append(5));
+    GTEST_EXPECT_TRUE(b.size == 4);
+
+    GTEST_EXPECT_TRUE(b.remove_at(0));
+    EXPECT_EQ(b[0], 4);
+    EXPECT_EQ(b[1], 2);
+    EXPECT_EQ(b[2], 3);
+
+    GTEST_EXPECT_TRUE(b.remove_at<true>(0));
+    EXPECT_EQ(b[0], 2);
+    EXPECT_EQ(b[1], 3);
 }
 
 namespace test
@@ -173,19 +185,19 @@ GTEST_TEST(ce, bulk_complex)
 
         GTEST_EXPECT_TRUE(b.remove_at(0));
         GTEST_EXPECT_TRUE(b.size == 2);
-        GTEST_EXPECT_TRUE(test::big::stats.expect(0, 3, 0, 0, 0, 1));
+        GTEST_EXPECT_TRUE(test::big::stats.expect(1, 3, 0, 0, 0, 1));
 
         GTEST_EXPECT_TRUE(b.remove_at(1));
         GTEST_EXPECT_TRUE(b.size == 1);
-        GTEST_EXPECT_TRUE(test::big::stats.expect(1, 3, 0, 0, 0, 1));
+        GTEST_EXPECT_TRUE(test::big::stats.expect(2, 3, 0, 0, 0, 1));
 
         b.clear();
         GTEST_EXPECT_TRUE(b.size == 0);
-        GTEST_EXPECT_TRUE(test::big::stats.expect(2, 3, 0, 0, 0, 1));
+        GTEST_EXPECT_TRUE(test::big::stats.expect(3, 3, 0, 0, 0, 1));
 
         GTEST_EXPECT_TRUE(b.append_n(3));
         GTEST_EXPECT_TRUE(b.size == 3);
-        GTEST_EXPECT_TRUE(test::big::stats.expect(2, 6, 0, 0, 0, 1));
+        GTEST_EXPECT_TRUE(test::big::stats.expect(3, 6, 0, 0, 0, 1));
 
         GTEST_EXPECT_FALSE(b.append_n(3));
         GTEST_EXPECT_TRUE(b.size == 3);
@@ -195,8 +207,25 @@ GTEST_TEST(ce, bulk_complex)
 
         GTEST_EXPECT_FALSE(b.resize(6));
         GTEST_EXPECT_TRUE(b.size == 2);
+
+        GTEST_EXPECT_TRUE(b.resize(0));
+        GTEST_EXPECT_TRUE(test::big::stats.expect(6, 6, 0, 0, 0, 1));
+
+        test::big i{ };
+        b[0] = i;
+        b[0] = b[1];
+        b[0] = { };
+
+        b[0] = test::big{ b[1] };
+
+        b.append(i);
+        b.append(test::big{ });
+        b.append_n(1);
+        b.remove_at<true>(0);
+        b.append_n(1);
+        b.remove_at(0);
     }
-    GTEST_EXPECT_TRUE(test::big::stats.expect(5, 6, 0, 0, 0, 1));
+    GTEST_EXPECT_TRUE(test::big::stats.expect(14, 11, 2, 1, 2, 6));
 }
 
 GTEST_TEST(ce, random64)
