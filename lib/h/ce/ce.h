@@ -514,22 +514,29 @@ namespace ce
         bool append(Us&&...us)
         {
             if (size < N)
-                return CE_CONSTRUCT_AT(&data[size]) T{ static_cast<Us>(us)... }, ++size, true;
+                return CE_CONSTRUCT_AT(&data[size]) T{ static_cast<Us&&>(us)... }, ++size, true;
             return false;
         }
 
+        template<bool Ordered = false>
         bool remove_at(size_t i)
         {
             if (i >= size)
                 return false;
 
-            auto back = size - 1;
-            if (back != i)
-                data[i] = static_cast<T&&>(data[back]);
+            --size;
+            if constexpr (Ordered)
+            {
+                for (; i < size; ++i)
+                    data[i] = static_cast<T&&>(data[i + 1]);
+            }
             else
-                CE_DESTROY_AT(data + back) ~T();
+            {
+                if (i < size)
+                    data[i] = static_cast<T&&>(data[size]);
+            }
 
-            size = back;
+            CE_DESTROY_AT(data + size) ~T();
 
             return true;
         }
