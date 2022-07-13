@@ -50,6 +50,7 @@ function Cache
         }
         Write-Host UNZIP: "$cache/$Path.zip" -> "$cache/$Path" -Fo Blue
         Expand-Archive -Path "$cache/$Path.zip" -DestinationPath "$cache/$Path" -Force
+        Get-ChildItem -Path "$cache/$Path" -File -Recurse | foreach {$_.IsReadOnly = $true}
     }
 }
 

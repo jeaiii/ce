@@ -88,11 +88,13 @@ GTEST_TEST(ce, bulk_simple)
     GTEST_EXPECT_TRUE(b.size == 4);
 
     GTEST_EXPECT_TRUE(b.remove_at(0));
+    GTEST_EXPECT_TRUE(b.size == 3);
     EXPECT_EQ(b[0], 4);
     EXPECT_EQ(b[1], 2);
     EXPECT_EQ(b[2], 3);
 
     GTEST_EXPECT_TRUE(b.remove_at<true>(0));
+    GTEST_EXPECT_TRUE(b.size == 2);
     EXPECT_EQ(b[0], 2);
     EXPECT_EQ(b[1], 3);
 }
