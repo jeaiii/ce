@@ -411,7 +411,7 @@ namespace ce
         }
     };
 
-#define CE_CONSTRUCT_AT(...) new (reinterpret_cast<detail::new_tag*>(__VA_ARGS__))
+#define CE_CONSTRUCT_AT(...) new (reinterpret_cast<ce::detail::new_tag*>(__VA_ARGS__))
 #define CE_DESTROY_AT(...) (__VA_ARGS__)->
 
     template<class T> size_t construct_at(T data[], size_t head, size_t tail)
@@ -432,6 +432,36 @@ namespace ce
         return head;
     }
 
+    template<class T, class...Ts> struct is_constructible_with
+    {
+        template<class U, class...Us> static constexpr bool test(...) { return false; };
+        template<class U, class...Us> static constexpr bool test(decltype(U{ (*(Us*)0)... }, 0)) { return false; }
+        static constexpr bool value = test<T, Ts...>(0);
+    };
+
+    template<class T> struct is_constructible_with<T>
+    {
+        template<class U> static constexpr bool test(...) { return false; }
+        template<class U> static constexpr bool test(decltype(U{ }, 0)) { return true; }
+        static constexpr bool value = test<T>(0);
+    };
+
+    template<class T> inline void construct_copy(T& dst, T const& src)
+    {
+        if constexpr (is_constructible_with<T, T>::value)
+        {
+            CE_CONSTRUCT_AT(&dst) T{ src };
+        }
+        else if constexpr (is_constructible_with<T>::value)
+        {
+            CE_CONSTRUCT_AT(&dst) T, dst = src;
+        }
+        else
+        {
+            dst = src;
+        }
+    }
+
     template<class T> size_t assign_items(size_t dst_size, T dst_data[], size_t src_size, T const src_data[])
     {
         if (dst_size < src_size)
@@ -439,14 +469,13 @@ namespace ce
             for (size_t i = 0; i < dst_size; ++i)
                 dst_data[i] = src_data[i];
             for (size_t i = dst_size; i < src_size; ++i)
-                CE_CONSTRUCT_AT(dst_data + i) T(src_data[i]);            
+                construct_copy(dst_data[i], src_data[i]);
         }
         else
         {
             for (size_t i = 0; i < src_size; ++i)
                 dst_data[i] = src_data[i];
-            for (size_t i = src_size; i < dst_size; ++i)
-                CE_DESTROY_AT(dst_data + i) ~T();
+            destroy_at(dst_data, src_size, dst_size);
         }
         return src_size;
     }
@@ -461,12 +490,19 @@ namespace ce
 
         bulk(bulk const& b)
         {
+            CE_ASSERT(b.size <= N);
+
             for (size_t i = 0; i < b.size; ++i)
-                CE_CONSTRUCT_AT(&data[i]) T(b.data[i]);
+                construct_copy(data[i], b.data[i]);
             size = b.size;
         }
 
-        bulk& operator=(bulk const& b) { size = assign_items(size, data, b.size, b.data); return *this; }
+        bulk& operator=(bulk const& b)
+        {
+            CE_ASSERT(size <= N && b.size <= N);
+            size = assign_items(size, data, b.size, b.data);
+            return *this;
+        }
         
         //bulk(bulk&&) = delete;
         //bulk& operator=(bulk&&) = delete;
