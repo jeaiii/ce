@@ -139,6 +139,7 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #define CE_MEMSET(...) __builtin_memset(__VA_ARGS__)
 #define CE_STRLEN(...) __builtin_strlen(__VA_ARGS__)
 #define CE_ROTL32(...) __builtin_rotateleft32(__VA_ARGS__)
+#define CE_NOINLINE __attribute__((noinline))
 
 #elif defined(_MSC_VER)
 
@@ -152,6 +153,7 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #define CE_MEMSET(...) ce::detail::memset(__VA_ARGS__)
 #define CE_STRLEN(...) ce::detail::strlen(__VA_ARGS__)
 #define CE_ROTL32(...) ce::detail::_rotl(__VA_ARGS__)
+#define CE_NOINLINE __declspec(noinline)
 
 #elif defined(__GNUC__)
 
@@ -166,6 +168,7 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #define CE_MEMSET(...) __builtin_memset(__VA_ARGS__)
 #define CE_STRLEN(...) __builtin_strlen(__VA_ARGS__)
 #define CE_ROTL32(...) ce::detail::rotl32(__VA_ARGS__)
+#define CE_NOINLINE __attribute__((noinline))
 
 #endif
 
@@ -1317,7 +1320,7 @@ namespace ce
 
 #define CE_AS_NAMES_EX(N, NAMES) []{ static constexpr ce::names<sizeof(NAMES ""), N> _{ NAMES "" }; return _.data; }()
 
-    template<class...Ts> _declspec(noinline) void call_log_hook(int level, char const* const keys[], Ts const&...ts)
+    template<class...Ts> CE_NOINLINE void call_log_hook(int level, char const* const keys[], Ts const&...ts)
     {
         constexpr int argc = sizeof...(Ts);
         CE_LOG_HOOK(level, argc, ce::identity_t<char const* [argc + 1][2]>{ { *keys++, as_string{ ts }.as }..., { nullptr, nullptr } });
