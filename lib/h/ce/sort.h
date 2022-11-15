@@ -72,17 +72,17 @@ namespace ce
         T* p = a;
 
         for (T* q = a; q < e; ++q)
-            if (k < *q)
+            if (*q < k)
                 swap(*p, *q), ++p;
         swap(*p, *e);
         return p;
     }
 
-    template<class T>
+    template<size_t N, class T>
     void intro_sort(T* a, T* b, size_t intro)
     {
         size_t n = b - a;
-        if (n < 128)
+        if (n < N)
             return insertion_sort(a, b);
 
         //if (limit == 0)
@@ -90,22 +90,22 @@ namespace ce
 
         T* p = partition(a, b);
         size_t limit = intro / 2;
-        intro_sort<T>(p + 1, b, limit);
-        intro_sort<T>(a, p, limit);
+        intro_sort<N, T>(p + 1, b, limit);
+        intro_sort<N, T>(a, p, limit);
     }
 
-    template<class T>
+    template<size_t N = 128, class T>
     void intro_sort(T* a, T* b)
     {
         if (a < b)
         {
             size_t n = b - a;
-            if (n < 128)
+            if (n < N)
                 return insertion_sort(a, b);
 
             T* p = partition(a, b);
-            intro_sort<T>(a, p, n);
-            intro_sort<T>(p + 1, b, n);
+            intro_sort<N, T>(a, p, n);
+            intro_sort<N, T>(p + 1, b, n);
         }
     }
 
