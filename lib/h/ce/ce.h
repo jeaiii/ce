@@ -920,7 +920,7 @@ namespace ce
         template<class...U> constexpr vec3<U...> operator/(const vec3<U...>& a, car_t<U...> const& b) { return { a.x / b, a.y / b, a.z / b }; }
         template<class...U> inline vec3<U...>& operator+=(vec3<U...>& a, const vec3<U...>& b) { a.x += b.x; a.y += b.y; a.z += b.z; return a; }
         template<class...U> inline vec3<U...>& operator-=(vec3<U...>& a, const vec3<U...>& b) { a.x -= b.x; a.y -= b.y; a.z -= b.z; return a; }
-        template<class...U> inline vec3<U...>& operator*=(vec3<U...>& a, car_t<U...> const& b) { a.x *= b; a.y *= b; a.z /= b; return a; }
+        template<class...U> inline vec3<U...>& operator*=(vec3<U...>& a, car_t<U...> const& b) { a.x *= b; a.y *= b; a.z *= b; return a; }
         template<class...U> inline vec3<U...>& operator/=(vec3<U...>& a, car_t<U...> const& b) { a.x /= b; a.y /= b; a.z /= b; return a; }
 
         template<class T, class U> size_t in_polygon_xy(T x, T y, size_t n, U const ps[])
