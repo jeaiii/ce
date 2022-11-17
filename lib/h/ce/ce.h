@@ -1040,7 +1040,7 @@ namespace ce
     namespace ascii
     {
         constexpr bool is_base10(char a) { return a >= '0' && a <= '9'; }
-        constexpr bool is_base16(char a) { return a >= '0' && a <= '9' || a >= 'A' && a <= 'Z' || a >= 'a' && a <= 'z'; }
+        constexpr bool is_base16(char a) { return a >= '0' && a <= '9' || a >= 'A' && a <= 'F' || a >= 'a' && a <= 'f'; }
         constexpr bool is_base64(char a) { return (a >= '0' && a <= '9') || (a >= 'A' && a <= 'Z') || (a >= 'a' && a <= 'z') || (a == '+') || (a == '/'); }
         constexpr bool is_alpha(char a) { return a >= 'A' && a <= 'Z' || a >= 'a' && a <= 'z'; }
         constexpr bool is_upper(char a) { return a >= 'A' && a <= 'Z'; }
