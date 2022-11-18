@@ -30,8 +30,6 @@ namespace ce
 {
     namespace nameof_detail
     {
-        template<class T, auto... N> static constexpr auto& raw_name() { return __PRETTY_FUNCTION__; }
-
         static constexpr auto same(char const a[], char const b[])
         {
             for (unsigned i = 0;; ++i)
@@ -39,16 +37,13 @@ namespace ce
                     return i;
         }
 
-        static constexpr auto raw_type_skip = same(raw_name<void>(), raw_name<int>());
-        static constexpr auto raw_type_size = sizeof(raw_name<void>()) - 4;
-        static constexpr auto raw_item_skip = same(raw_name<void, 0>(), raw_name<void>());
-        static constexpr auto raw_item_size = sizeof(raw_name<void>());
-
-        static constexpr auto trim(char const a[], char const b[])
+        static constexpr unsigned skip(char what, char const text[])
         {
-            auto n = same(a, b);
-            return a[n] == '\0' ? n : 0;
-        }
+            for (unsigned n = 0; text[n] != 0; ++n)
+                if (text[n] == what && text[n + 1] != what)
+                    return n + 1;
+            return 0;
+        };
 
         template<unsigned N> struct const_text
         {
@@ -62,26 +57,31 @@ namespace ce
             }
         };
 
-        template<class, auto...> struct nameof;
+        template<class T, auto... N> static constexpr auto& name() { return __PRETTY_FUNCTION__; }
+        static constexpr auto& name_void = name<void>();
+        static constexpr auto skip_type = same(name_void, name<int>());
+        static constexpr auto skip_item = same(name<void, 0>(), name_void);
+        template<class T> static constexpr auto name_type = const_text<sizeof(name<T>()) - sizeof(name_void) + 4>(name<T>() + skip_type);
+        template<auto N> static constexpr auto name_item = const_text<sizeof(name<void, N>()) - sizeof(name_void)>(name<void, N>() + skip_item);
+
+        template<class T, T...> struct nameof;
         template<class T> struct nameof<T>
         {
-            static constexpr auto& raw = raw_name<T>();
-            static constexpr auto raw_size = sizeof(raw) - raw_type_size;
-            static constexpr auto raw_text = raw + raw_type_skip;
-
-            static constexpr auto skip = trim("enum ", raw_text) + trim("class ", raw_text) + trim("struct ", raw_text);
-            static constexpr auto size = raw_size - skip;
-            static constexpr auto text = const_text<size>{ raw_text + skip };
+            static constexpr auto _skip = skip(' ', name_type<T>.data);
+            static constexpr auto text = const_text<name_type<T>.size - _skip>{ name_type<T>.data + _skip };
         };
 
-        template<class U, auto N> struct nameof<U, N>
+        template<class T, T N> struct nameof<T, N>
         {
-            static constexpr auto& raw = raw_name<void, N>();
-            static constexpr auto size = sizeof(raw) - raw_item_size;
-            static constexpr auto text = const_text<size>{ raw + raw_item_skip };
+            static constexpr bool is_known = name_item<N>.data[0] != '(';
+            static constexpr auto _skip = skip(':', name_item<N>.data);
+            static constexpr auto text = const_text<is_known ? name_item<N>.size - _skip : 3>{ is_known ? name_item<N>.data + _skip : "???" };
+        };
 
-            static constexpr bool is_known = text.data[nameof<decltype(N)>::size] == ':';
-            static constexpr auto type_skip = is_known ? nameof<decltype(N)>::size + 2 : 0;
+        template<class T> struct result
+        {
+            T data;
+            bool good;
         };
 
         template<class T, unsigned L, unsigned H> static constexpr char const* nameof_enum(T n)
@@ -95,12 +95,11 @@ namespace ce
             {
                 if (unsigned(n) == L)
                 {
-                    using N = nameof<void, T{ L }>;
+                    using N = detail::nameof<T, T{ L }>;
                     if constexpr (N::is_known)
-                        return N::text.data + N::type_skip;
+                        return N::text.data;
                     else
                         return "???";
-
                 }
                 return nameof_enum<T, L + 1, H>(n);
             }
@@ -109,8 +108,37 @@ namespace ce
                 return "???";
             }
         }
+
+        template<class T, unsigned L, unsigned H> static constexpr result<T> as_enum(char const name[])
+        {
+            if constexpr (H - L > 64)
+            {
+                constexpr auto M = L + (H - L) / 2;
+                auto n = as_enum<T, L, M>(name);
+                return n.good ? n : as_enum<T, M, H>(name);
+            }
+            else if constexpr (L < H)
+            {
+                using N = detail::nameof<T, T{ L }>;
+                if constexpr (N::is_known)
+                {
+                    if (same(N::text.data, name) == N::text.size && name[N::text.size] == '\0')
+                        return { T{ L }, true };
+                }
+                return as_enum<T, L + 1, H>(name);
+            }
+            else
+            {
+                return { T{ }, false };
+            }
+        }
     }
 
     template<class T> char const* nameof(T n) { return nameof_detail::nameof_enum<T, 0, 256>(n); }
     template<class T> constexpr auto& nameof() { return nameof_detail::nameof<T>::text.data; }
+    template<class T> T as_enum(char const name[], T unknown)
+    { 
+        auto n = nameof_detail::as_enum<T, 0, 256>(name);
+        return n.good ? n.data : unknown;
+    }
 }
