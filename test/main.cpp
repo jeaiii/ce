@@ -8,6 +8,7 @@
 #include "ce/lziii.h"
 #include "ce/math.h"
 #include "ce/mutex.h"
+#include "ce/nameof.h"
 #include "ce/pool.h"
 #include "ce/sort.h"
 #include "ce/zorder.h"

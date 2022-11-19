@@ -237,12 +237,12 @@ namespace ce
 {
     template<class T> using identity_t = T;
 
-    template<class T, T...Is> struct items { enum : size_t { count = sizeof...(Is) }; };
-    template<class T, T I> struct items<T, I> { enum : size_t { count = 1 }; enum : T { value = I }; };
+    template<class T, T...Is> struct items { static constexpr size_t count = sizeof...(Is); };
+    template<class T, T I> struct items<T, I> { static constexpr size_t count = 1; static constexpr T value = I; };
 
     template<class...> struct types;
-    template<> struct types<> { enum : size_t { count = 0 }; using car_t = void; using cdr_t = void; };
-    template<class T, class...Ts> struct types<T, Ts...> { enum : size_t { count = 1 + sizeof...(Ts) }; using car_t = T; using cdr_t = types<Ts...>; };
+    template<> struct types<> { static constexpr size_t count = 0; using car_t = void; using cdr_t = void; };
+    template<class T, class...Ts> struct types<T, Ts...> { static constexpr size_t count = 1 + sizeof...(Ts); using car_t = T; using cdr_t = types<Ts...>; };
 
     template<class...Ts> using car_t = typename types<Ts...>::car_t;
     template<class...Ts> using cdr_t = typename types<Ts...>::cdr_t;
@@ -339,12 +339,12 @@ namespace ce
     //--------
 
     template<class...> struct tuple;
-    template<> struct tuple<> { enum : size_t { count = 0 }; };
+    template<> struct tuple<> { static constexpr size_t count = 0; };
 
-    template<class T0> struct tuple<T0> { enum : size_t { count = 1 }; T0 _0; };
-    template<class T0, class T1> struct tuple<T0, T1> { enum : size_t { count = 2 }; T0 _0; T1 _1; };
-    template<class T0, class T1, class T2> struct tuple<T0, T1, T2> { enum : size_t { count = 3 }; T0 _0; T1 _1; T2 _2; };
-    template<class T0, class T1, class T2, class T3> struct tuple<T0, T1, T2, T3> { enum : size_t { count = 4 }; T0 _0; T1 _1; T2 _2; T3 _3; };
+    template<class T0> struct tuple<T0> { static constexpr size_t count = 1; T0 _0; };
+    template<class T0, class T1> struct tuple<T0, T1> { static constexpr size_t count = 2; T0 _0; T1 _1; };
+    template<class T0, class T1, class T2> struct tuple<T0, T1, T2> { static constexpr size_t count = 3; T0 _0; T1 _1; T2 _2; };
+    template<class T0, class T1, class T2, class T3> struct tuple<T0, T1, T2, T3> { static constexpr size_t count = 4; T0 _0; T1 _1; T2 _2; T3 _3; };
 
     template<class T> using box = tuple<T>;
     template<class T, class U> using pair = tuple<T, U>;

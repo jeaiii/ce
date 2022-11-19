@@ -89,15 +89,14 @@ namespace ce
         return a;
     }
 
-    inline bool z_inside(uint64_t lo, uint64_t hi, uint64_t /*zn*/)
+    inline bool z_inside(uint64_t lo, uint64_t hi, uint64_t zn)
     {
-        uint64_t zn_x = lo & 0x5555555555555555;
-        uint64_t zn_y = hi & 0xaaaaaaaaaaaaaaaa;
-
+        uint64_t zn_x = zn & 0x5555555555555555;
         uint64_t lo_x = lo & 0x5555555555555555;
-        uint64_t lo_y = lo & 0xaaaaaaaaaaaaaaaa;
-
         uint64_t hi_x = hi & 0x5555555555555555;
+
+        uint64_t zn_y = zn & 0xaaaaaaaaaaaaaaaa;
+        uint64_t lo_y = lo & 0xaaaaaaaaaaaaaaaa;
         uint64_t hi_y = hi & 0xaaaaaaaaaaaaaaaa;
 
         if (zn_x < lo_x || zn_x > hi_x)
@@ -109,7 +108,7 @@ namespace ce
         return true;
     }
 
-    inline size_t z_query(uint64_t* out, uint64_t lo, uint64_t hi, size_t size, uint64_t const* data)
+    inline size_t z_query(uint64_t* out, uint64_t lo, uint64_t hi, size_t size, uint64_t const data[])
     {
         auto last = data + size;
         size = 0;
