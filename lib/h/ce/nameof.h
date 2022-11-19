@@ -95,7 +95,7 @@ namespace ce
             {
                 if (unsigned(n) == L)
                 {
-                    using N = detail::nameof<T, T{ L }>;
+                    using N = nameof<T, static_cast<T>(L)>;
                     if constexpr (N::is_known)
                         return N::text.data;
                     else
@@ -119,11 +119,11 @@ namespace ce
             }
             else if constexpr (L < H)
             {
-                using N = detail::nameof<T, T{ L }>;
+                using N = nameof<T, static_cast<T>(L)>;
                 if constexpr (N::is_known)
                 {
                     if (same(N::text.data, name) == N::text.size && name[N::text.size] == '\0')
-                        return { T{ L }, true };
+                        return { static_cast<T>(L), true };
                 }
                 return as_enum<T, L + 1, H>(name);
             }
@@ -136,7 +136,7 @@ namespace ce
 
     template<class T> char const* nameof(T n) { return nameof_detail::nameof_enum<T, 0, 256>(n); }
     template<class T> constexpr auto& nameof() { return nameof_detail::nameof<T>::text.data; }
-    template<class T> T as_enum(char const name[], T unknown)
+    template<class T> T as_enum(char const name[], T unknown = T{ })
     { 
         auto n = nameof_detail::as_enum<T, 0, 256>(name);
         return n.good ? n.data : unknown;
