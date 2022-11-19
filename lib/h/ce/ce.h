@@ -145,9 +145,9 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 
 #define CE_DEBUG_BREAK() (ce::detail::_ReadWriteBarrier(), ce::detail::__debugbreak())
 #if CE_CPU_X86
-#define CE_TIME_STAMP() static_cast<ce::uint64_t>(ce::detail::__rdtsc())
+#define CE_TIMESTAMP() static_cast<ce::uint64_t>(ce::detail::__rdtsc())
 #else
-#define CE_TIME_STAMP() ce::uint64_t(0)
+#define CE_TIMESTAMP() ce::uint64_t(0)
 #endif
 #define CE_MEMCPY(...) ce::detail::memcpy(__VA_ARGS__)
 #define CE_MEMSET(...) ce::detail::memset(__VA_ARGS__)
@@ -159,10 +159,10 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 
 #if CE_CPU_X86
 #define CE_DEBUG_BREAK() ({ __asm__ volatile("int $0x03"); })
-#define CE_TIME_STAMP() static_cast<ce::uint64_t>(__builtin_ia32_rdtsc())
+#define CE_TIMESTAMP() static_cast<ce::uint64_t>(__builtin_ia32_rdtsc())
 #else
 #define CE_DEBUG_BREAK() void(0)
-#define CE_TIME_STAMP() ce::uint64_t(0)
+#define CE_TIMESTAMP() ce::uint64_t(0)
 #endif
 #define CE_MEMCPY(...) __builtin_memcpy(__VA_ARGS__)
 #define CE_MEMSET(...) __builtin_memset(__VA_ARGS__)
@@ -171,6 +171,8 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #define CE_NOINLINE __attribute__((noinline))
 
 #endif
+
+#define CE_TIME_STAMP() CE_TIMESTAMP()
 
 //--------
 
@@ -1089,6 +1091,9 @@ namespace ce
         struct file_t { void* os_handle; };
 
         void debug_out(char const text[]);
+
+        uint64_t monotonic_timestamp();
+        uint64_t monotonic_frequency();
 
         bool open_file(file_t& file, char const path[]);
         bool close_file(file_t& file);

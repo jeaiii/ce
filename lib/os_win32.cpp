@@ -69,6 +69,20 @@ namespace ce
             OutputDebugStringW(os_text);
         }
 
+        uint64_t monotonic_timestamp()
+        {
+            LARGE_INTEGER n;
+            QueryPerformanceCounter(&n);
+            return uint64_t(n.QuadPart);
+        }
+
+        uint64_t monotonic_frequency()
+        {
+            LARGE_INTEGER n;
+            QueryPerformanceFrequency(&n);
+            return uint64_t(n.QuadPart);
+        }
+
         file_t open_file(char const path[])
         {
             CE_TO_UTF16(os_path, path);
