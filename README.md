@@ -34,6 +34,8 @@
 - `as_string` - form a fixed size null terminated array of utf-8 chars "inline"
 #### basic os functions
 - `debug_out()` - output to the debugger
+- `monotonic_timestamp()` - monotonic non stop timestamp
+- `monotonic_frequency()` - frequency of monotonic non stop timestamp
 - `open_file()`
 - `close_file()`
 - `map_span()` - memory map a file as a `span`
@@ -46,7 +48,7 @@
 - `CE_CPU_X86`, `CE_CPU_X86_32`, `CE_CPU_X86_64` - x86 compile time cpu detection
 - `CE_CPU_WASM`, `CE_CPU_WASM_32`, `CE_CPU_WASM_64` - WebAssembly compile time cpu detection
 - `CE_DEBUG_BREAK()` - break to debugger
-- `CE_TIME_STAMP()` - high resolution time stamp counter
+- `CE_TIMESTAMP()` - high resolution timestamp counter (e.g. rdtsc on x86)
 - `CE_MEMCPY()` - memcpy intrinsic
 - `CE_MEMSET()` - memset intrinsic
 - `CE_ROTL32()` - rotate left intrinsic
@@ -69,7 +71,7 @@
 ### atomic.h
 - ultra low overhead atomics similar to `std::atomic<T>`, but using reference parameters and minimal function call depth for optimal debug and release codegen
 ### cdt.h
-- constrained delaunay triangulation with low memory footprint integer 
+- fully deterministic, integer based, constrained delaunay triangulation with low memory footprint
 ### dictionary.h
 - hash table
 ### io.h
@@ -80,6 +82,9 @@
 - more math...
 ### mutex.h
 - `thread_mutex` and `thread_shared_mutex`
+### nameof.h
+- type -> string: `char (&nameof<T>())[N]`
+- enum value <-> string: `char cosnt* nameof(T n)` `T as_enum(char const name[], T unknown = T{ })`
 ### pool.h
 - object pool 
 ### sort.h
