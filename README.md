@@ -84,7 +84,7 @@
 - `thread_mutex` and `thread_shared_mutex`
 ### nameof.h
 - type -> string: `char (&nameof<T>())[N]`
-- enum value <-> string: `char cosnt* nameof(T n)` `T as_enum(char const name[], T unknown = T{ })`
+- enum value <-> string: `char const* nameof(T n)` `T as_enum(char const name[], T unknown = T{ })`
 ### pool.h
 - object pool 
 ### sort.h
