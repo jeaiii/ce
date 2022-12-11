@@ -27,9 +27,11 @@ SOFTWARE.
 
 namespace ce
 {
-#if CE_OS_WIN32
+#if CE_API_WIN32
     struct thread_mutex { void* opaque_values[1]{ }; }; // WIN32 SRWLOCK
     struct thread_shared_mutex { void* opaque_values[1]{ }; }; // WIN32 SRWLOCK
+#elif CE_API_POSIX
+
 #endif
 
     // non reentrant/recursive mutex for threads of a single process

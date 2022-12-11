@@ -1,4 +1,4 @@
-#include "ce/atomic_msvc_x86.h"
+#include "ce/atomic.h"
 
 #include "gtest/gtest.h"
 

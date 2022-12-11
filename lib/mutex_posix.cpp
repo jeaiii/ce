@@ -23,14 +23,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "ce.h"
+#include "ce/mutex.h"
 
-#ifdef CE_USER_ATOMIC_INCLUDE
-#define CE_ATOMIC_INCLUDE CE_USER_ATOMIC_INCLUDE
-#elif CE_CPU_X86 && defined(_MSC_VER)
-#define CE_ATOMIC_INCLUDE "atomic_msvc_x86.h"
-#else
-#define CE_ATOMIC_INCLUDE "atomic_std.h"
+#if CE_API_POSIX
+namespace ce
+{
+    void construct_mutex(thread_mutex& q) { }
+    void destroy_mutex(thread_mutex& q) { }
+    bool try_acquire_mutex(thread_mutex& q) { }
+    void acquire_mutex(thread_mutex& q) { }
+    void release_mutex(thread_mutex& q) { }
+
+    void construct_mutex(thread_shared_mutex& q) {  }
+    void destroy_mutex(thread_shared_mutex& q) {  }
+    bool try_acquire_mutex(thread_shared_mutex& q) { }
+    void acquire_mutex(thread_shared_mutex& q) { }
+    void release_mutex(thread_shared_mutex& q) { }
+    bool try_acquire_mutex_shared(thread_shared_mutex& q) { }
+    void acquire_mutex_shared(thread_shared_mutex& q) { }
+    void release_mutex_shared(thread_shared_mutex& q) { }
+}
 #endif
-
-#include CE_ATOMIC_INCLUDE
