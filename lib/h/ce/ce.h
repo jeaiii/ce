@@ -80,16 +80,46 @@ namespace ce
 
         class new_tag;
     }
+
+
+    enum class api
+    {
+        unknown,
+        windows,
+        linux,
+        wasm
+    };
+
+    enum class cpu
+    {
+        unknown,
+        x86_32,
+        x86_64,
+        arm_32,
+        arm_64,
+        wasm_32,
+        wasm_64
+    };
 }
 
 inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return p; }
 
 //--------
 
-#define CE_OS_WIN32 0
-#define CE_OS_UNKNOWN 0
-#undef CE_OS_WIN32
-#define CE_OS_WIN32 1
+#define CE_API_UNKNOWN 0
+#define CE_API_WIN32 0
+#define CE_API_POSIX 0
+
+#if defined(_WIN32)
+#undef CE_API_WIN32
+#define CE_API_WIN32 1
+#elif defined(__unix__)
+#undef CE_API_POSIX
+#define CE_API_POSIX 1
+#else
+#undef CE_API_UNKNOWN
+#define CE_API_UNKNOWN 1
+#endif
 
 #define CE_CPU_X86_32 0
 #define CE_CPU_X86_64 0
@@ -1101,7 +1131,7 @@ namespace ce
         bool map_span(span<uint8_t const>&, char const path[]);
         bool unmap_span(span<uint8_t const>& span);
 
-        template<class T, class...U> span<T const> map_span(U&&...u)
+        template<class T, class...U> inline span<T const> map_span(U&&...u)
         {
             span<uint8_t const> view;
             map_span(view, static_cast<U>(u)...);

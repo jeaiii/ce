@@ -25,7 +25,7 @@ SOFTWARE.
 
 #include "ce/ce.h"
 
-#if CE_OS_WIN32
+#if CE_API_WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 

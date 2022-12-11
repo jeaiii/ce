@@ -26,7 +26,7 @@ SOFTWARE.
 #include "ce.h"
 
 #if CE_CPU_X86 && defined(_MSC_VER)
-
+// ce::atomic specialized for msvc x86
 #include <emmintrin.h>
 
 namespace ce
@@ -64,7 +64,7 @@ namespace ce
 
         extern "C" void _ReadWriteBarrier();
 
-        auto scope_spin_lock(void volatile const* p)
+        inline auto scope_spin_lock(void volatile const* p)
         {
             static void* locks[256];
 
