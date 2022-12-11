@@ -46,7 +46,7 @@ namespace ce
 
         file_t open_file(char const path[])
         {
-            return { handle };
+            return { };
         }
 
         bool open_file(file_t& file, char const path[])
