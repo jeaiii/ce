@@ -25,14 +25,42 @@ SOFTWARE.
 
 #include "ce.h"
 
+#define CE_MUTEX_STD 0
+#define CE_MUTEX_WIN32 0
+
+#if defined(CE_USER_MUTEX_STD)
+#undef CE_MUTEX_STD
+#define CE_MUTEX_STD 1
+#elif CE_API_WIN32
+#undef CE_MUTEX_WIN32
+#define CE_MUTEX_WIN32 1
+#else
+#undef CE_MUTEX_STD
+#define CE_MUTEX_STD 1
+#endif
+
+#if CE_MUTEX_STD
+#include <mutex>
+#include <shared_mutex>
+#endif
+
 namespace ce
 {
-#if CE_API_WIN32
-    struct thread_mutex { void* opaque_values[1]{ }; }; // WIN32 SRWLOCK
-    struct thread_shared_mutex { void* opaque_values[1]{ }; }; // WIN32 SRWLOCK
-#elif CE_API_POSIX
-
+    namespace detail
+    {
+#if CE_MUTEX_WIN32
+        constexpr auto thread_mutex_sizeof = sizeof(void*); // WIN32 SRWLOCK 
+        constexpr auto thread_shared_mutex_sizeof = sizeof(void*); // WIN32 SRWLOCK
+#elif CE_MUTEX_STD
+        constexpr auto thread_mutex_sizeof = sizeof(std::mutex);
+        constexpr auto thread_shared_mutex_sizeof = sizeof(std::shared_mutex);
 #endif
+        static_assert(thread_mutex_sizeof % sizeof(void*) == 0);
+        static_assert(thread_shared_mutex_sizeof % sizeof(void*) == 0);
+    };
+
+    struct thread_mutex { void* opaque_data[detail::thread_mutex_sizeof / sizeof(void*)]; };
+    struct thread_shared_mutex { void* opaque_data[detail::thread_shared_mutex_sizeof / sizeof(void*)]; };
 
     // non reentrant/recursive mutex for threads of a single process
     void construct_mutex(thread_mutex&);
