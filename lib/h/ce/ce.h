@@ -81,13 +81,12 @@ namespace ce
         class new_tag;
     }
 
-
     enum class api
     {
         unknown,
         windows,
         linux,
-        wasm
+        wasi
     };
 
     enum class cpu
