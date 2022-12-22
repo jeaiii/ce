@@ -1124,6 +1124,8 @@ namespace ce
         uint64_t monotonic_timestamp();
         uint64_t monotonic_frequency();
 
+        void sleep_ns(uint64_t ns);
+
         bool open_file(file_t& file, char const path[]);
         bool close_file(file_t& file);
         bool map_span(span<uint8_t const>&, file_t);

@@ -276,5 +276,72 @@ GTEST_TEST(ce, random128)
     CE_LOG(random128, lo, hi);
 
     EXPECT_LT(sos, 256 * 256 * 3 / 8);
+}
 
+void get_timestamp_and_monotonic(uint64_t& timestamp, uint64_t& monotonic)
+{
+    auto t0 = CE_TIMESTAMP();
+    auto m0 = ce::os::monotonic_timestamp();
+    auto t1 = CE_TIMESTAMP();
+    auto m1 = ce::os::monotonic_timestamp();
+    auto t2 = CE_TIMESTAMP();
+
+    if (t2 - t1 < t1 - t0)
+    {
+        t0 = t1;
+        m0 = m1;
+    }
+    timestamp = t0;
+    monotonic = m0;
+}
+
+
+GTEST_TEST(ce, monotonic_timestamp)
+{
+    auto f = ce::os::monotonic_frequency();
+    
+    auto t0 = CE_TIMESTAMP();
+    auto m0 = ce::os::monotonic_timestamp();
+    auto t1 = CE_TIMESTAMP();
+    auto m1 = ce::os::monotonic_timestamp();
+    auto t2 = CE_TIMESTAMP();
+
+    CE_LOG(info, t0, t1, t2);
+
+    CE_LOG(info, f);
+    CE_LOG(info, m0, m1);
+
+    EXPECT_LT(t0, t1);
+    EXPECT_LT(t1, t2);
+    EXPECT_LE(m0, m1);
+
+    auto dt0 = t1 - t0;
+    auto dt1 = t2 - t1;
+
+    CE_LOG(info, dt0, dt1);
+
+    if (dt1 < dt0)
+    {
+        t0 = t1;
+        m0 = m1;
+    }
+
+    uint64_t t;
+    uint64_t m;
+    do
+    {
+        get_timestamp_and_monotonic(t, m);
+        m -= m0;
+
+        if (m == 0)
+            continue;
+
+        t -= t0;
+
+        auto qf = f / double(m);
+        auto cf = qf * t;
+
+        CE_LOG(info, cf);
+        ce::os::sleep_ns(100000000);
+    } while (m * 2 < f);
 }
