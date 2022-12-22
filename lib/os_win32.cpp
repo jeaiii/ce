@@ -83,6 +83,21 @@ namespace ce
             return uint64_t(n.QuadPart);
         }
 
+        void sleep_ns(uint64_t ns)
+        {
+            DWORD ms = 0;
+            if (ns != 0)
+            {
+                ns /= 1000000u;
+                if (ns % 1000000u != 0)
+                    ns += 1;
+                ms = (DWORD)ns;
+                if (ms != ns)
+                    ms = ~(DWORD)0;
+            }
+            Sleep(ms);
+        }
+
         file_t open_file(char const path[])
         {
             CE_TO_UTF16(os_path, path);
