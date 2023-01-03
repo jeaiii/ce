@@ -163,7 +163,7 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #if defined(__clang__)
 
 #define CE_DEBUG_BREAK() __builtin_debugtrap()
-#define CE_TIME_STAMP() static_cast<ce::uint64_t>(__builtin_readcyclecounter())
+#define CE_TIMESTAMP() static_cast<ce::uint64_t>(__builtin_readcyclecounter())
 #define CE_MEMCPY(...) __builtin_memcpy(__VA_ARGS__)
 #define CE_MEMSET(...) __builtin_memset(__VA_ARGS__)
 #define CE_STRLEN(...) __builtin_strlen(__VA_ARGS__)
@@ -450,7 +450,7 @@ namespace ce
 
     template<class T> size_t construct_at(T data[], size_t head, size_t tail)
     {
-        if constexpr (!__has_trivial_constructor(T))
+        if constexpr (!__is_trivially_constructible(T))
             while (head < tail)
                 CE_CONSTRUCT_AT(data + head) T, ++head;
 
@@ -459,7 +459,7 @@ namespace ce
 
     template<class T> size_t destroy_at(T data[], size_t head, size_t tail)
     {
-        if constexpr (!__has_trivial_destructor(T))
+        if constexpr (!__is_trivially_destructible(T))
             while (head < tail)
                 --tail, CE_DESTROY_AT(data + tail) ~T();
 
