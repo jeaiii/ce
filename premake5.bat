@@ -108,7 +108,7 @@ $version = default $premake.version "5.0.0-alpha16"
 if ($env:OS -eq "Windows_NT") {
     $os = "windows"
     $ext = "zip"
-    $action = default $premake.action "vs2019"
+    $action = default $premake.action "vs2022"
     $args = ""
 } elseif ($IsLinux) {
     $os = "linux"

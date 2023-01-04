@@ -29,7 +29,7 @@ namespace ce
 {
     namespace os
     {
-        void debug_out(char const text[])
+        void debug_out(char const [])
         {
         }
 
@@ -43,23 +43,23 @@ namespace ce
             return 0;
         }
 
-        file_t open_file(char const path[])
+        file_t open_file(char const [])
         {
             return { };
         }
 
-        bool open_file(file_t& file, char const path[])
+        bool open_file(file_t&, char const [])
         {
             return false;
         }
 
-        bool close_file(file_t& file)
+        bool close_file(file_t&)
         {
             return false;
         }
 
         // read only
-        bool map_span(span<uint8_t const>& span, file_t file)
+        bool map_span(span<uint8_t const>& span, file_t)
         {
             span.size = 0;
             span.data = nullptr;
@@ -81,7 +81,7 @@ namespace ce
             return false;
         }
 
-        uint8_t* virtual_alloc(size_t size)
+        uint8_t* virtual_alloc(size_t)
         {
             return nullptr;
         }

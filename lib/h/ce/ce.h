@@ -403,7 +403,7 @@ namespace ce
         template<class T> using arrity_count = count_leading_t<items<bool, true>, typename arrity_check<T, sequence_t<size_t, 5>>::type_t>;
 
         template<class T, class...Ts> T get(items<size_t, 0>, T t, Ts...) { return t; }
-        template<size_t N, class T, class...Ts> auto get(items<size_t, N>, T t, Ts...ts) { return get(items<size_t, N - 1>{}, ts...); }
+        template<size_t N, class T, class...Ts> auto get(items<size_t, N>, T, Ts...ts) { return get(items<size_t, N - 1>{}, ts...); }
 
         template<class T, size_t N, size_t = arrity_count<T>::value> struct crack { static detail::any get(T) = delete; };
         template<class T, size_t N> struct crack<T, N, 1> { static auto get(T t) { auto [_0] = t; return get(items<size_t, N>{}, _0); } };
@@ -1071,9 +1071,9 @@ namespace ce
     namespace ascii
     {
         constexpr bool is_base10(char a) { return a >= '0' && a <= '9'; }
-        constexpr bool is_base16(char a) { return a >= '0' && a <= '9' || a >= 'A' && a <= 'F' || a >= 'a' && a <= 'f'; }
+        constexpr bool is_base16(char a) { return (a >= '0' && a <= '9') || (a >= 'A' && a <= 'F') || (a >= 'a' && a <= 'f'); }
         constexpr bool is_base64(char a) { return (a >= '0' && a <= '9') || (a >= 'A' && a <= 'Z') || (a >= 'a' && a <= 'z') || (a == '+') || (a == '/'); }
-        constexpr bool is_alpha(char a) { return a >= 'A' && a <= 'Z' || a >= 'a' && a <= 'z'; }
+        constexpr bool is_alpha(char a) { return (a >= 'A' && a <= 'Z') || (a >= 'a' && a <= 'z'); }
         constexpr bool is_upper(char a) { return a >= 'A' && a <= 'Z'; }
         constexpr bool is_lower(char a) { return a >= 'a' && a <= 'z'; }
     }
@@ -1095,12 +1095,12 @@ namespace ce
         {
             uint8_t dec[256]{ };
             for (size_t i = 0; i < 64; ++i)
-                dec["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = uint8_t(i);
+                dec[uint8_t("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i])] = uint8_t(i);
 
             for (size_t i = 0; i < dst_size; ++i)
             {
-                auto a = dec[src[i * 4 / 3 + 0]];
-                auto b = dec[src[i * 4 / 3 + 1]];
+                auto a = dec[uint8_t(src[i * 4 / 3 + 0])];
+                auto b = dec[uint8_t(src[i * 4 / 3 + 1])];
                 size_t n = i % 3 * 2 + 2;
                 dst_data[i] = (a << n) + (b >> (6 - n));
             }
