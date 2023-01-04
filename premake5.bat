@@ -38,18 +38,33 @@ function default
     if ($Value) { $Value } else { $Default }
 }
 
+function expand_archive
+{
+    param ([string]$ArchivePath, [string]$DestinationPath, [string]$Extention = "zip")
+
+    if ($Extention -eq "zip") {
+        Expand-Archive -Path $ArchivePath -DestinationPath $DestinationPath -Force
+    } elseif ($Extention -eq "tar.gz") {
+        mkdir -p $DestinationPath
+        tar -xzvf $ArchivePath -C $DestinationPath
+    } else {
+        Throw "unknown archive ext"
+    }
+}
+
 function Cache
 {
-    param ([string]$Uri, [string]$Path)
+    param ([string]$Uri, [string]$Path, [string]$Extention = "zip")
+
     if (-not (Test-Path -Path "$cache/$Path"))
     {
-        if (-not (Test-Path -Path "$cache/$Path.zip"))
+        if (-not (Test-Path -Path "$cache/$Path.$Extention"))
         {
-            Write-Host GET: $Uri -> "$cache/$Path.zip" -Fo Blue
-            Invoke-WebRequest -Uri $Uri -OutFile "$cache/$Path.zip"
+            Write-Host GET: $Uri -> "$cache/$Path.$Extention" -Fo Blue
+            Invoke-WebRequest -Uri $Uri -OutFile "$cache/$Path.$Extention"
         }
-        Write-Host UNZIP: "$cache/$Path.zip" -> "$cache/$Path" -Fo Blue
-        Expand-Archive -Path "$cache/$Path.zip" -DestinationPath "$cache/$Path" -Force
+        Write-Host EXPAND: "$cache/$Path.$Extention" -> "$cache/$Path" -Fo Blue
+        expand_archive "$cache/$Path.$Extention" "$cache/$Path" $Extention
         Get-ChildItem -Path "$cache/$Path" -File -Recurse | foreach {$_.IsReadOnly = $true}
     }
 }
@@ -89,14 +104,26 @@ if ($premake.packages)
 }
 
 $version = default $premake.version "5.0.0-alpha16"
-$os = default $premake.os "windows"
-$action = default $premake.action "vs2019"
+
+if ($env:OS -eq "Windows_NT") {
+    $os = "windows"
+    $ext = "zip"
+    $action = default $premake.action "vs2019"
+    $args = ""
+} elseif ($IsLinux) {
+    $os = "linux"
+    $ext = "tar.gz"
+    $action = default $premake.action "gmake2"
+    $args = "--cc=clang"
+} else {
+    Throw "os not supported"
+}
 
 $path = "premake-$version-$os"
 Write-Host PREMAKE: $path -fo green
 	
-Cache -Uri "https://github.com/premake/premake-core/releases/download/v$version/$path.zip" -Path $path
+Cache -Uri "https://github.com/premake/premake-core/releases/download/v$version/$path.$ext" -Path $path $ext
 
 $packages | ConvertTo-Json | Set-Content -Path "$cache/packages.json"
 
-Start-Process -FilePath "$cache/$path/premake5" -NoNewWindow -Wait -ArgumentList $action
+Start-Process -FilePath "$cache/$path/premake5" -NoNewWindow -Wait -ArgumentList "$args $action"

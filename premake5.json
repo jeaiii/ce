@@ -1,6 +1,5 @@
 {
     "version": "5.0.0-beta1",
-    "action": "vs2022",
     "packages": {
         "googletest": {
             "org": "google",
