@@ -2,6 +2,8 @@
 
 #include "gtest/gtest.h"
 
+#include <cmath>
+
 GTEST_TEST(math, ab_less_cd)
 {
     ce::int32_t a = 5;
