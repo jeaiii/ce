@@ -166,9 +166,14 @@ namespace ce
 
                 atomic(const T& v) : data{ v } { };
                 atomic() = default;
-                atomic(const atomic&) = delete;
-                atomic& operator=(const atomic&) = delete;
+            
+                atomic(atomic const&) = delete;
+                atomic(atomic&&) = delete;
+                atomic& operator=(atomic const&) = delete;
+                atomic& operator=(atomic&&) = delete;
             };
+            template<> union atomic<void> { };
+
 
             template<class T> inline T atomic_load(atomic<T> const& a) noexcept
             {

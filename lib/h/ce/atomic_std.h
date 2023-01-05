@@ -31,8 +31,20 @@ SOFTWARE.
 
 namespace ce
 {
-    template<class T> struct atomic { std::atomic<T> atom; };
-    template<> struct atomic<void> { };
+    template<class T> union atomic
+    {
+        T data;
+        std::atomic<T> atom;
+
+        atomic(const T& v) : atom{ v } { };
+        atomic() : data{ } { };
+
+        atomic(atomic const&) = delete;
+        atomic(atomic&&) = delete;
+        atomic& operator=(atomic const&) = delete;
+        atomic& operator=(atomic&&) = delete;
+    };
+    template<> union atomic<void> { };
 
     template<class T> using atomic_mem_t = decltype(T() == T(), T());
     template<class T> using atomic_val_t = decltype(*(T*)0 += T() - T(), T() - T());
