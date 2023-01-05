@@ -34,8 +34,8 @@ GTEST_TEST(atomic, atomic)
     //cei0 = ai.data;
 
     // std::atomic allows this but we don't
-    scei0 = { 5 };
-    scei0 = 5;
+    //scei0 = { 5 };
+    //scei0 = 5;
 
     // should fail
     //cei0 = { 5 };

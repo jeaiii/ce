@@ -19,8 +19,11 @@ jobs:
     - name: Premake
       run: pwsh premake5.bat
 
-    - name: Build
+    - name: Build ce
       run: make -C ./.build/gmake2 ce
+
+    - name: Build ce-test
+      run: make -C ./.build/gmake2 ce-test
 
     # - name: Test
     #   working-directory: ${{env.SOLUTION_FILE_PATH}}/projects/bin/x64/Release
