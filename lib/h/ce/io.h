@@ -109,7 +109,7 @@ namespace ce
     // treat ce::list as an array of `size` items of type 'T', TODO jea make sure we have the hooks we need for deserialization
     template<size_t N, class T> struct reflection<list<T, N>> : list<T, N>
     {
-        template<class IO> void io_self(IO& io) { io.items(size, data); }
+        template<class IO> void io_self(IO& io) { io.items(this->size, this->data); }
     };
 
     // treat smid vecs as fixed size arrays
@@ -120,7 +120,7 @@ namespace ce
 
     template<class T, class...Ks> struct reflection<vec<2, T, Ks...>> : vec<2, T, Ks...>
     {
-        template<class IO> void io_self(IO& io) { io.items(identity_t<char const* const[]>{ "x", "y" }, x, y); }
+        template<class IO> void io_self(IO& io) { io.items(identity_t<char const* const[]>{ "x", "y" }, this->x, this->y); }
     };
 
 }

@@ -2,6 +2,8 @@
 
 #include "gtest/gtest.h"
 
+#include <cmath>
+
 GTEST_TEST(math, ab_less_cd)
 {
     ce::int32_t a = 5;
@@ -17,7 +19,7 @@ GTEST_TEST(math, inside)
     ce::vec2<int32_t> v00{ 0, 0 };
     ce::vec2<int32_t> v10{ 10, 0 };
     ce::vec2<int32_t> v01{ 0, 10 };
-    ce::vec2<int32_t> v11{ 10, 10 };
+    //ce::vec2<int32_t> v11{ 10, 10 };
 
     GTEST_EXPECT_TRUE(ce::inside(v01, v10));
     GTEST_EXPECT_TRUE(ce::inside(v00, v10));

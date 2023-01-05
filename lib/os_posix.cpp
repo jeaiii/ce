@@ -43,6 +43,10 @@ namespace ce
             return 0;
         }
 
+        void sleep_ns(uint64_t)
+        {
+        }
+
         file_t open_file(char const [])
         {
             return { };
