@@ -42,6 +42,7 @@ struct io_as_cjson_text : ce::io<io_as_cjson_text>
     io_as_cjson_text(char const name[], T& data) { item(name, data); *at = '\0'; }
 };
 
+#if CE_API_WIN32
 GTEST_TEST(io, io)
 {
 
@@ -60,3 +61,4 @@ GTEST_TEST(io, io)
     EXPECT_STREQ(io_as_cjson_text("w", w).as, "w: { time: 0, bodies: [{ p: [1, 2], steps: [[3, 4], [5, 6]] }, { p: [-1, -2], steps: [[-3, -4], [-5, -6]] }] }");
 
 }
+#endif
