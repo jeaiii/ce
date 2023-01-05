@@ -1,5 +1,6 @@
 # ce - Common Environment for c++
-![windows](https://github.com/jeaiii/ce/actions/workflows/build.yml/badge.svg)
+![windows](https://github.com/jeaiii/ce/actions/workflows/build-windows.yml/badge.svg)
+![linux](https://github.com/jeaiii/ce/actions/workflows/build-linux.yml/badge.svg)
 
 - supports clang, msvc, and gcc
 - supports x86, WebAssembly, and ARM (TODO)
