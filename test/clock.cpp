@@ -6,6 +6,10 @@ ce::clock<60> g_clock60hz;
 
 GTEST_TEST(clock, 60hz)
 {
+    // no clock?
+    if (ce::os::monotonic_frequency() == 0)
+        return;
+
     auto a = ce::os::monotonic_timestamp();
 
     g_clock60hz.reset();
