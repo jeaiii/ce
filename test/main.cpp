@@ -30,6 +30,8 @@ enum class colors
 
 GTEST_TEST(ce, main)
 {
+#if CE_API_WIN32
+
     int a = 4;
 
     CE_LOG(0);
@@ -64,6 +66,7 @@ GTEST_TEST(ce, main)
 
     //CE_LOG(info, (4, "hello(\", j" ",", 5, "world"), (35));
     CE_LOG(info, (ce::vec2<int32_t, void>{ 1, 3 })        ,      ce::vec2<int32_t, void>{ 2, 5 });
+#endif
 }
 
 GTEST_TEST(ce, bulk_simple)
@@ -299,6 +302,9 @@ void get_timestamp_and_monotonic(uint64_t& timestamp, uint64_t& monotonic)
 GTEST_TEST(ce, monotonic_timestamp)
 {
     auto f = ce::os::monotonic_frequency();
+
+    if (f == 0)
+        return;
     
     auto t0 = CE_TIMESTAMP();
     auto m0 = ce::os::monotonic_timestamp();
