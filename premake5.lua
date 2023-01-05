@@ -1,6 +1,10 @@
 local packages = json.decode(io.readfile(".cache/packages.json"))
 local projects = "" .. _MAIN_SCRIPT_DIR .. "/.build/" .. _ACTION .. "/projects"
 
+if os.istarget("linux") then
+    toolset ("clang")
+end
+
 workspace "ce"
     configurations { "Debug", "Release" }
     platforms { "x64" }

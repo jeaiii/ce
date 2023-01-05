@@ -1,0 +1,27 @@
+name: Linux
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Premake
+      run: pwsh premake5.bat
+
+    - name: Build
+      run: make -C ./.build/gmake2 ce
+
+    # - name: Test
+    #   working-directory: ${{env.SOLUTION_FILE_PATH}}/projects/bin/x64/Release
+    #   run: ./ce-test.exe
