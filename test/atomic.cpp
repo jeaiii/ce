@@ -1,3 +1,6 @@
+
+//#define CE_USER_ATOMIC_INCLUDE "atomic_std.h"
+
 #include "ce/atomic.h"
 
 #include "gtest/gtest.h"
@@ -18,11 +21,26 @@ std::atomic<int> scei2{ 5 };
 std::atomic<int> scei3 = { 5 };
 std::atomic<int> scei4 = 5;
 
+// std doesn't support this
+//std::atomic<void> sav;
+
+// we do, but it is empty
+ce::atomic<void> av;
+
 GTEST_TEST(atomic, atomic)
 {
+    // should fail
     //cei3 = ce::atomic<int>{ 5 };
     //cei0 = ai.data;
-    //scei0 = { 5 };
+
+    // std::atomic allows this but we don't
+    scei0 = { 5 };
+    scei0 = 5;
+
+    // should fail
+    //cei0 = { 5 };
+    //cei0 = 5;
+
 
     ce::atomic_store(ai, 0);
 
