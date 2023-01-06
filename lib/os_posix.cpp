@@ -25,26 +25,47 @@ SOFTWARE.
 #include "ce/ce.h"
 
 #if CE_API_POSIX
+
+#include <unistd.h>
+#include <time.h>
+
 namespace ce
 {
     namespace os
     {
-        void debug_out(char const [])
+        void debug_out(char const text[])
         {
+            write(STDERR_FILENO, text, __builtin_strlen(text));
         }
 
         uint64_t monotonic_timestamp()
         {
-            return 0;
+            timespec ts;
+            if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts))
+                return 0;
+
+            return ts.tv_nsec + ts.tv_sec * 1000000000;
         }
 
         uint64_t monotonic_frequency()
         {
-            return 0;
+            return 1000000000;
         }
 
-        void sleep_ns(uint64_t)
+        void sleep_ns(uint64_t ns)
         {
+            timespec ts;
+            if (ns < 1000000000u)
+            {
+                ts.tv_sec = 0;
+                ts.tv_nsec = ns;
+            }
+            else
+            {
+                ts.tv_sec = ns / 1000000000u;
+                ts.tv_nsec = ns % 1000000000u;
+            }
+            nanosleep(&ts, nullptr);
         }
 
         file_t open_file(char const [])
