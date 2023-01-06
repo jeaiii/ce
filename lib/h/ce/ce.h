@@ -80,25 +80,6 @@ namespace ce
 
         class new_tag;
     }
-
-    enum class api
-    {
-        unknown,
-        windows,
-        linux,
-        wasi
-    };
-
-    enum class cpu
-    {
-        unknown,
-        x86_32,
-        x86_64,
-        arm_32,
-        arm_64,
-        wasm_32,
-        wasm_64
-    };
 }
 
 inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return p; }
@@ -1206,14 +1187,12 @@ namespace ce
         return p;
     }
 
-    template<class...Ts> char* to_text(char text[], Ts const&...values) { return ((text = to_text(text, values)), ...); }
-
     template<class T> char* to_text(char text[], T const& value)
     {
         if constexpr (is_enum<T>::value)
         {
             // unknown enum types as underlying type
-            return to_text(to_text_p(text, "#<enum "), as_cast{ value }.as, '>');
+            return to_text(to_text(to_text_p(text, "#<enum "), as_cast{ value }.as), '>');
         }
         else if constexpr (is_same<T, decltype(nullptr)>::value)
         {
@@ -1238,7 +1217,7 @@ namespace ce
 
         char const* p = "";
         for (size_t i = 0; i < n; p = ", ", ++i)
-            text = to_text(text, p, values[i]);
+            text = to_text(to_text(text, p), values[i]);
 
         return to_text(text, ']');
     }
@@ -1254,6 +1233,11 @@ namespace ce
     template<size_t N, class...U> char* to_text(char text[], vec<N, U...> const& value)
     {
         return to_text_n(text, N, &value.x);
+    }
+
+    template<class...Ts> char* to_text(char text[], Ts const&...values)
+    { 
+        return ((text = to_text(text, values)), ..., text);
     }
 
     //--------
