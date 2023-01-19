@@ -41,7 +41,7 @@ GTEST_TEST(ce, main)
     CE_LOG(to_text, uint8_t(-1), uint16_t(-1), uint32_t(-1), uint64_t(-1));
     CE_LOG(to_text, (signed char)-1, (short)-1, (int)-1, (long)-1, (long long)-1);
     CE_LOG(to_text, (unsigned char)-1, (unsigned short)-1, (unsigned int)-1, (unsigned long)-1, (unsigned long long)-1);
-    CE_LOG(to_text, float(10.5), double(100.5));
+    CE_LOG(to_text, float(10.5), double(100.5), float(0.123496875f));
     CE_LOG(to_text, colors::red, colors::green, colors::blue);
 
     int* ip = nullptr;// &a;
