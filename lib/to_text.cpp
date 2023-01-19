@@ -23,14 +23,31 @@ SOFTWARE.
 */
 
 #include "ce/ce.h"
-
 #include "to_text_from_integer.h"
+
+#if !defined(CE_USER_TO_TEXT_FROM_IEEE754)
 #include <charconv>
+#define CE_USER_TO_TEXT_FROM_IEEE754(T, N) std::to_chars(T, (T) + 32, N).ptr
+#endif
 
 namespace ce
 {
-    char* to_text(char text[], float value) { return std::to_chars(text, text + 32, value).ptr; }
-    char* to_text(char text[], double value) { return std::to_chars(text, text + 32, value).ptr; }
+    // TODO: this is temp, will replace with hex or simple float to text
+    template<class T>
+    char* to_text_from_ieee754(char* text, T n)
+    {
+        if constexpr (sizeof(T) == sizeof(uint8_t))
+            return to_text(text, "#<f8:", as_cast<uint8_t, T>{ n }.as, '>');
+        if constexpr (sizeof(T) == sizeof(uint16_t))
+            return to_text(text, "#<f16:", as_cast<uint16_t, T>{ n }.as, '>');
+        if constexpr (sizeof(T) == sizeof(uint32_t))
+            return to_text(text, "#<f32:", as_cast<uint32_t, T>{ n }.as, '>');
+        if constexpr (sizeof(T) == sizeof(uint64_t))
+            return to_text(text, "#<f64:", as_cast<uint64_t, T>{ n }.as, '>');
+    }
+
+    char* to_text(char text[], float value) { return CE_USER_TO_TEXT_FROM_IEEE754(text, value); }
+    char* to_text(char text[], double value) { return CE_USER_TO_TEXT_FROM_IEEE754(text, value); }
 
     char* to_text(char text[], unsigned char i) { return jeaiii::to_text_from_integer(text, i); }
     char* to_text(char text[], unsigned short i) { return jeaiii::to_text_from_integer(text, i); }
