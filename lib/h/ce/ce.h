@@ -1306,7 +1306,7 @@ namespace ce
                 {    
                     if (quote == 0)
                     {
-                        if (*src == ',' && balance == 0)
+                        if (*src == ',' && (balance == 0 || src[1] == '\0'))
                             break;
                         else if (*src == '"' || *src == '\'')
                             quote = *src;
