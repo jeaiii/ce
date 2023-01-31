@@ -414,313 +414,44 @@ namespace ce
 
     template<size_t N, class T> auto get(T const& t) { return detail::crack<T, N>::get(t); }
 
-    //--------
-
-    template<class T> struct span
+    namespace os
     {
-        size_t size;
-        T* data;
+        void debug_out(char const text[]);
 
-        T* begin() { return data + 0; }
-        T* end() { return data + size; }
-
-        T const* begin() const { return data + 0; }
-        T const* end() const { return data + size; }
-
-        friend span skip(span s, size_t n)
+        inline bool error(int level, int argc, char const* argv[][2])
         {
-            return n < s.size ? span{ s.size - n, s.data + n } : span{ 0, s.data };
-        }
+            auto out = [](char const text[]) { if (text != nullptr) debug_out(text); };
 
-        friend span trim(span s, size_t n)
-        {
-            return n < s.size ? span{ s.size - n, s.data } : span{ 0, s.data };
-        }
-    };
+            if (argc < 2 || argv == nullptr)
+                return level != 0;
 
-#define CE_CONSTRUCT_AT(...) new (reinterpret_cast<ce::detail::new_tag*>(__VA_ARGS__))
-#define CE_DESTROY_AT(...) (__VA_ARGS__)->
+            out("******** FAILED ********\n");
 
-    template<class T> size_t construct_at(T data[], size_t head, size_t tail)
-    {
-        if constexpr (!__is_trivially_constructible(T))
-            while (head < tail)
-                CE_CONSTRUCT_AT(data + head) T, ++head;
-
-        return tail;
-    }
-
-    template<class T> size_t destroy_at(T data[], size_t head, size_t tail)
-    {
-        if constexpr (!__is_trivially_destructible(T))
-            while (head < tail)
-                --tail, CE_DESTROY_AT(data + tail) ~T();
-
-        return head;
-    }
-
-    template<class T, class...Ts> struct is_constructible_with
-    {
-        template<class U, class...Us> static constexpr bool test(...) { return false; };
-        template<class U, class...Us> static constexpr bool test(decltype(U{ (*(Us*)0)... }, 0)) { return false; }
-        static constexpr bool value = test<T, Ts...>(0);
-    };
-
-    template<class T> struct is_constructible_with<T>
-    {
-        template<class U> static constexpr bool test(...) { return false; }
-        template<class U> static constexpr bool test(decltype(U{ }, 0)) { return true; }
-        static constexpr bool value = test<T>(0);
-    };
-
-    template<class T> inline void construct_copy(T& dst, T const& src)
-    {
-        if constexpr (is_constructible_with<T, T>::value)
-        {
-            CE_CONSTRUCT_AT(&dst) T{ src };
-        }
-        else if constexpr (is_constructible_with<T>::value)
-        {
-            CE_CONSTRUCT_AT(&dst) T, dst = src;
-        }
-        else
-        {
-            dst = src;
-        }
-    }
-
-    template<class T> size_t assign_items(size_t dst_size, T dst_data[], size_t src_size, T const src_data[])
-    {
-        if (dst_size < src_size)
-        {
-            for (size_t i = 0; i < dst_size; ++i)
-                dst_data[i] = src_data[i];
-            for (size_t i = dst_size; i < src_size; ++i)
-                construct_copy(dst_data[i], src_data[i]);
-        }
-        else
-        {
-            for (size_t i = 0; i < src_size; ++i)
-                dst_data[i] = src_data[i];
-            destroy_at(dst_data, src_size, dst_size);
-        }
-        return src_size;
-    }
-
-    template<size_t N, class T> struct bulk
-    {
-        size_t size;
-        union { char d0; T data[N]; };
-
-        bulk() : size{ }, d0{ } { }
-        ~bulk() { destroy_at(data, 0, size); }
-
-        bulk(bulk const& b)
-        {
-            CE_ASSERT(b.size <= N, b.size);
-
-            for (size_t i = 0; i < b.size; ++i)
-                construct_copy(data[i], b.data[i]);
-            size = b.size;
-        }
-
-        bulk& operator=(bulk const& b)
-        {
-            CE_ASSERT(size <= N && b.size <= N, size, b.size);
-            size = assign_items(size, data, b.size, b.data);
-            return *this;
-        }
-        
-        //bulk(bulk&&) = delete;
-        //bulk& operator=(bulk&&) = delete;
-
-        static size_t capacity() { return N; }
-
-        void clear() { size = destroy_at(data, 0, size); }
-
-        // tries to set the size to `n`
-        // fails returning false if `n' > capacity
-        bool resize(size_t n)
-        {
-            if (n > N)
-                return false;
-
-            size = n <= size ? destroy_at(data, n, size) : construct_at(data, size, n);
-            return true;
-        }
-
-
-        size_t room() const { return N - size; }
-
-        T* begin() { return &data[0]; }
-        T* end() { return &data[size]; }
-
-        T const* begin() const { return &data[0]; }
-        T const* end() const { return &data[size]; }
-
-        T const& back() const { return size > 0 ? data[size - 1] : *reinterpret_cast<T const*>(nullptr); }
-        T& back() { return size > 0 ? data[size - 1] : *reinterpret_cast<T*>(nullptr); }
-
-        T& operator[](size_t i) { return data[i]; }
-        T const& operator[](size_t i) const { return data[i]; }
-
-        bool append_n(size_t n = 1)
-        {
-            if (N - size < n)
-                return false;
-
-            size = construct_at(data, size, size + n);
-            return true;
-        }
-
-        template<class...Us>
-        bool append(Us&&...us)
-        {
-            if (size < N)
-                return CE_CONSTRUCT_AT(&data[size]) T{ static_cast<Us&&>(us)... }, ++size, true;
-            return false;
-        }
-
-        template<bool Ordered = false>
-        bool remove_at(size_t i)
-        {
-            if (i >= size)
-                return false;
-
-            --size;
-            if constexpr (Ordered)
+            out(argv[0][1]);
+            out(": ");
+            out(argv[0][0]);
+            out(": ");
+            out(argv[1][0]);
+            out(": (");
+            out(argv[1][1]);
+            out(") = (");
+            char const* prefix = "";
+            for (int i = 2; i < argc; ++i)
             {
-                for (; i < size; ++i)
-                    data[i] = static_cast<T&&>(data[i + 1]);
+                out(prefix);
+                prefix = ", ";
+                //out(argv[i][0]);
+                //out(" = ");
+                out(argv[i][1]);
             }
-            else
-            {
-                if (i < size)
-                    data[i] = static_cast<T&&>(data[size]);
-            }
+            out(")\n");
+            out("************************\n");
 
-            CE_DESTROY_AT(data + size) ~T();
-
-            return true;
+            return level != 0;
         }
 
-        friend span<T> make_span(bulk& c) { return { c.size, &c.data[0] }; }
-        friend span<T const> make_span(bulk const& c) { return { c.size, &c.data[0] }; }
-    };
-
-    template<class T, size_t N> using list = bulk<N, T>;
-    
-    template<class T> void heap_raise(T data[], T item, size_t n)
-    {
-        while (n > 0)
-        {
-            auto p = (n - 1) / 2;
-
-            if (item < data[p])
-                data[n] = data[p];
-            else
-                break;
-
-            n = p;
-        }
-        data[n] = item;
+        void log(int level, int argc, char const* argv[][2]);
     }
-
-    template<class T> void heap_lower(size_t size, T data[], T item, size_t n)
-    {
-        for (;;)
-        {
-            auto p = n * 2 + 1;
-            if (p >= size)
-                break;
-
-            if (p + 1 < size && data[p + 1] < data[p])
-                ++p;
-
-            if (item < data[p])
-                break;
-
-            data[n] = data[p];
-            n = p;
-        }
-        data[n] = item;
-    }
-
-    template<size_t N, class T> struct min_priority_queue
-    {
-        size_t size;
-        T data[N];
-
-        T head() const { return data[0]; }
-
-        bool empty() const { return size < 1; }
-
-        bool enqueue(T item)
-        {
-            return size < N ? heap_raise(data, item, size++), true : false;
-        }
-
-        T dequeue()
-        {
-            T item = data[0];
-
-            if (--size > 0)
-                heap_lower(size, data, data[size], 0);
-
-            return item;
-        }
-    };
-
-    //--------
-
-    template<size_t N> struct bitset
-    {
-        uint8_t data[(N + 7) >> 3];
-
-        // operator[] can only be used to get, not to set.
-        bool operator[](size_t index) const
-        {
-            CE_ASSERT(index < N);
-            return (data[index >> 3] & ('\1' << (index % 8)));
-        }
-
-        void set()
-        {
-            CE_MEMSET(data, 0xff, (N + 7) >> 3);
-        }
-
-        void set(size_t index)
-        {
-            CE_ASSERT(index < N);
-            data[index >> 3] |= ('\1' << (index % 8));
-        }
-
-        void reset()
-        {
-            CE_MEMSET(data, 0, (N + 7) >> 3);
-        }
-
-        void reset(size_t index)
-        {
-            CE_ASSERT(index < N);
-            data[index >> 3] &= ~('\1' << (index % 8));
-        }
-
-        void set(size_t index, bool value)
-        {
-            CE_ASSERT(index < N);
-            if (value)
-            {
-                data[index >> 3] |= 1 << (index % 8);
-            }
-            else
-            {
-                data[index >> 3] &= ~(1 << (index % 8));
-            }
-        }
-
-        constexpr size_t get_size() const { return N; }
-    };
 
     //--------
 
@@ -1108,67 +839,6 @@ namespace ce
         };
     }
 
-    namespace os
-    {
-        struct file_t { void* os_handle; };
-
-        void debug_out(char const text[]);
-
-        uint64_t monotonic_timestamp();
-        uint64_t monotonic_frequency();
-
-        void sleep_ns(uint64_t ns);
-
-        bool open_file(file_t& file, char const path[]);
-        bool close_file(file_t& file);
-        bool map_span(span<uint8_t const>&, file_t);
-        bool map_span(span<uint8_t const>&, char const path[]);
-        bool unmap_span(span<uint8_t const>& span);
-
-        template<class T, class...U> inline span<T const> map_span(U&&...u)
-        {
-            span<uint8_t const> view;
-            map_span(view, static_cast<U>(u)...);
-            return { view.size / sizeof(T), reinterpret_cast<T const*>(view.data) };
-        }
-
-        uint8_t* virtual_alloc(size_t size);
-
-        inline bool error(int level, int argc, char const* argv[][2])
-        {
-            auto out = [](char const text[]) { if (text != nullptr) debug_out(text); };
-
-            if (argc < 2 || argv == nullptr)
-                return level != 0;
-
-            out("******** FAILED ********\n");
-
-            out(argv[0][1]);
-            out(": ");
-            out(argv[0][0]);
-            out(": ");
-            out(argv[1][0]);
-            out(": (");
-            out(argv[1][1]);
-            out(") = (");
-            char const* prefix = "";
-            for (int i = 2; i < argc; ++i)
-            {
-                out(prefix);
-                prefix = ", ";
-                //out(argv[i][0]);
-                //out(" = ");
-                out(argv[i][1]);
-            }
-            out(")\n");
-            out("************************\n");
-
-            return level != 0;
-        }
-
-        void log(int level, int argc, char const* argv[][2]);
-    }
-
     template<class T>
     struct rgba
     {
@@ -1420,7 +1090,6 @@ namespace ce
         constexpr int argc = sizeof...(Ts);
         CE_LOG_HOOK(level, argc, ce::identity_t<char const* [argc + 1][2]>{ { *keys++, as_string{ ts }.as }..., { nullptr, nullptr } });
     }
-
 }
 
 #define _CE_LOG_fatal ~, 0
@@ -1438,6 +1107,348 @@ namespace ce
 
 #define CE_LOG(LEVEL, ...) CE_LOG_EX(_CE_LOG_LVL(LEVEL), "$," #__VA_ARGS__, #LEVEL, ## __VA_ARGS__)
 #define CE_LOG_MSG(LEVEL, ...) CE_LOG_EX(_CE_LOG_LVL(LEVEL), "$,$msg", #LEVEL, ce::as_string{ __VA_ARGS__ }.as)
+
+namespace ce
+{
+    template<class T> struct span
+    {
+        size_t size;
+        T* data;
+
+        T* begin() { return data + 0; }
+        T* end() { return data + size; }
+
+        T const* begin() const { return data + 0; }
+        T const* end() const { return data + size; }
+
+        friend span skip(span s, size_t n)
+        {
+            return n < s.size ? span{ s.size - n, s.data + n } : span{ 0, s.data };
+        }
+
+        friend span trim(span s, size_t n)
+        {
+            return n < s.size ? span{ s.size - n, s.data } : span{ 0, s.data };
+        }
+    };
+
+    namespace os
+    {
+        uint64_t monotonic_timestamp();
+        uint64_t monotonic_frequency();
+        void sleep_ns(uint64_t ns);
+
+        struct file_t { void* os_handle; };
+
+        bool open_file(file_t& file, char const path[]);
+        bool close_file(file_t& file);
+        bool map_span(span<uint8_t const>&, file_t);
+        bool map_span(span<uint8_t const>&, char const path[]);
+        bool unmap_span(span<uint8_t const>& span);
+
+        template<class T, class...U> inline span<T const> map_span(U&&...u)
+        {
+            span<uint8_t const> view;
+            map_span(view, static_cast<U>(u)...);
+            return { view.size / sizeof(T), reinterpret_cast<T const*>(view.data) };
+        }
+
+        uint8_t* virtual_alloc(size_t size);
+    }
+
+#define CE_CONSTRUCT_AT(...) new (reinterpret_cast<ce::detail::new_tag*>(__VA_ARGS__))
+#define CE_DESTROY_AT(...) (__VA_ARGS__)->
+
+    template<class T> size_t construct_at(T data[], size_t head, size_t tail)
+    {
+        if constexpr (!__is_trivially_constructible(T))
+            while (head < tail)
+                CE_CONSTRUCT_AT(data + head) T, ++head;
+
+        return tail;
+    }
+
+    template<class T> size_t destroy_at(T data[], size_t head, size_t tail)
+    {
+        if constexpr (!__is_trivially_destructible(T))
+            while (head < tail)
+                --tail, CE_DESTROY_AT(data + tail) ~T();
+
+        return head;
+    }
+
+    template<class T, class...Ts> struct is_constructible_with
+    {
+        template<class U, class...Us> static constexpr bool test(...) { return false; };
+        template<class U, class...Us> static constexpr bool test(decltype(U{ (*(Us*)0)... }, 0)) { return false; }
+        static constexpr bool value = test<T, Ts...>(0);
+    };
+
+    template<class T> struct is_constructible_with<T>
+    {
+        template<class U> static constexpr bool test(...) { return false; }
+        template<class U> static constexpr bool test(decltype(U{ }, 0)) { return true; }
+        static constexpr bool value = test<T>(0);
+    };
+
+    template<class T> inline void construct_copy(T& dst, T const& src)
+    {
+        if constexpr (is_constructible_with<T, T>::value)
+        {
+            CE_CONSTRUCT_AT(&dst) T { src };
+        }
+        else if constexpr (is_constructible_with<T>::value)
+        {
+            CE_CONSTRUCT_AT(&dst) T, dst = src;
+        }
+        else
+        {
+            dst = src;
+        }
+    }
+
+    template<class T> size_t assign_items(size_t dst_size, T dst_data[], size_t src_size, T const src_data[])
+    {
+        if (dst_size < src_size)
+        {
+            for (size_t i = 0; i < dst_size; ++i)
+                dst_data[i] = src_data[i];
+            for (size_t i = dst_size; i < src_size; ++i)
+                construct_copy(dst_data[i], src_data[i]);
+        }
+        else
+        {
+            for (size_t i = 0; i < src_size; ++i)
+                dst_data[i] = src_data[i];
+            destroy_at(dst_data, src_size, dst_size);
+        }
+        return src_size;
+    }
+
+    template<size_t N, class T> struct bulk
+    {
+        size_t size;
+        union { char d0; T data[N]; };
+
+        bulk() : size{ }, d0{ } { }
+        ~bulk() { destroy_at(data, 0, size); }
+
+        bulk(bulk const& b)
+        {
+            CE_ASSERT(b.size <= N, b.size);
+
+            for (size_t i = 0; i < b.size; ++i)
+                construct_copy(data[i], b.data[i]);
+            size = b.size;
+        }
+
+        bulk& operator=(bulk const& b)
+        {
+            CE_ASSERT(size <= N && b.size <= N, size, b.size);
+            size = assign_items(size, data, b.size, b.data);
+            return *this;
+        }
+
+        //bulk(bulk&&) = delete;
+        //bulk& operator=(bulk&&) = delete;
+
+        static size_t capacity() { return N; }
+
+        void clear() { size = destroy_at(data, 0, size); }
+
+        // tries to set the size to `n`
+        // fails returning false if `n' > capacity
+        bool resize(size_t n)
+        {
+            if (n > N)
+                return false;
+
+            size = n <= size ? destroy_at(data, n, size) : construct_at(data, size, n);
+            return true;
+        }
+
+
+        size_t room() const { return N - size; }
+
+        T* begin() { return &data[0]; }
+        T* end() { return &data[size]; }
+
+        T const* begin() const { return &data[0]; }
+        T const* end() const { return &data[size]; }
+
+        T const& back() const { return size > 0 ? data[size - 1] : *reinterpret_cast<T const*>(nullptr); }
+        T& back() { return size > 0 ? data[size - 1] : *reinterpret_cast<T*>(nullptr); }
+
+        T& operator[](size_t i) { return data[i]; }
+        T const& operator[](size_t i) const { return data[i]; }
+
+        bool append_n(size_t n = 1)
+        {
+            if (N - size < n)
+                return false;
+
+            size = construct_at(data, size, size + n);
+            return true;
+        }
+
+        template<class...Us>
+        bool append(Us&&...us)
+        {
+            if (size < N)
+                return CE_CONSTRUCT_AT(&data[size]) T { static_cast<Us&&>(us)... }, ++size, true;
+            return false;
+        }
+
+        template<bool Ordered = false>
+        bool remove_at(size_t i)
+        {
+            if (i >= size)
+                return false;
+
+            --size;
+            if constexpr (Ordered)
+            {
+                for (; i < size; ++i)
+                    data[i] = static_cast<T&&>(data[i + 1]);
+            }
+            else
+            {
+                if (i < size)
+                    data[i] = static_cast<T&&>(data[size]);
+            }
+
+            CE_DESTROY_AT(data + size) ~T();
+
+            return true;
+        }
+
+        friend span<T> make_span(bulk& c) { return { c.size, &c.data[0] }; }
+        friend span<T const> make_span(bulk const& c) { return { c.size, &c.data[0] }; }
+    };
+
+    template<class T, size_t N> using list = bulk<N, T>;
+
+    template<class T> void heap_raise(T data[], T item, size_t n)
+    {
+        while (n > 0)
+        {
+            auto p = (n - 1) / 2;
+
+            if (item < data[p])
+                data[n] = data[p];
+            else
+                break;
+
+            n = p;
+        }
+        data[n] = item;
+    }
+
+    template<class T> void heap_lower(size_t size, T data[], T item, size_t n)
+    {
+        for (;;)
+        {
+            auto p = n * 2 + 1;
+            if (p >= size)
+                break;
+
+            if (p + 1 < size && data[p + 1] < data[p])
+                ++p;
+
+            if (item < data[p])
+                break;
+
+            data[n] = data[p];
+            n = p;
+        }
+        data[n] = item;
+    }
+
+    template<size_t N, class T> struct min_priority_queue
+    {
+        size_t size;
+        T data[N];
+
+        T head() const { return data[0]; }
+
+        bool empty() const { return size < 1; }
+
+        bool enqueue(T item)
+        {
+            return size < N ? heap_raise(data, item, size++), true : false;
+        }
+
+        T dequeue()
+        {
+            T item = data[0];
+
+            if (--size > 0)
+                heap_lower(size, data, data[size], 0);
+
+            return item;
+        }
+    };
+
+    //--------
+
+    template<size_t N> struct bitset
+    {
+        uint8_t data[(N + 7) >> 3];
+
+        // operator[] can only be used to get, not to set.
+        bool operator[](size_t index) const
+        {
+            CE_ASSERT(index < N);
+            return (data[index >> 3] & ('\1' << (index % 8)));
+        }
+
+        void set()
+        {
+            CE_MEMSET(data, 0xff, (N + 7) >> 3);
+        }
+
+        void set(size_t index)
+        {
+            CE_ASSERT(index < N);
+            data[index >> 3] |= ('\1' << (index % 8));
+        }
+
+        void reset()
+        {
+            CE_MEMSET(data, 0, (N + 7) >> 3);
+        }
+
+        void reset(size_t index)
+        {
+            CE_ASSERT(index < N);
+            data[index >> 3] &= ~('\1' << (index % 8));
+        }
+
+        void set(size_t index, bool value)
+        {
+            CE_ASSERT(index < N);
+            if (value)
+            {
+                data[index >> 3] |= 1 << (index % 8);
+            }
+            else
+            {
+                data[index >> 3] &= ~(1 << (index % 8));
+            }
+        }
+
+        constexpr size_t get_size() const { return N; }
+    };
+}
+
+
+
+
+
+
+
+
+
 
 //#define CE_USER_CHECKED
 #if defined(CE_USER_CHECKED)
