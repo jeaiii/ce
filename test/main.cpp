@@ -1,4 +1,5 @@
 #define CE_USER_CHECKED
+
 #include "ce/ce.h"
 
 #include "ce/atomic.h"
@@ -28,9 +29,40 @@ enum class colors
     blue
 };
 
+void test_assert(int a)
+{
+    CE_ASSERT();
+    CE_ASSERT(a < 3);
+    CE_ASSERT(a < 3, a);
+    CE_ASSERT(a < 3, a, a + a);
+    CE_ASSERT(a < 3, "a is too big", a, a + a);
+}
+
 GTEST_TEST(ce, main)
 {
-    int a = 4;
+    volatile int a = 4;
+
+#if 0
+    test_assert(a);
+
+    if (CE_VERIFY(a < 2, a))
+    {
+        CE_LOG_MSG(info, "GOOD");
+    }
+    else
+    {
+        CE_LOG_MSG(info, "BAD");
+    }
+
+    if (CE_REJECT(a > 2, a))
+    {
+        CE_LOG_MSG(info, "BAD");
+    }
+    else
+    {
+        CE_LOG_MSG(info, "GOOD");
+    }
+#endif
 
     CE_LOG(0);
     CE_LOG(info, "Hello World", a, a * a, a / a, a + a, a - a, a + 1, a + 2, a + 3, a + 4, a + 5);
