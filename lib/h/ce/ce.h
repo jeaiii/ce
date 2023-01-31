@@ -218,10 +218,10 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #define _CE_ERROR(KIND, WHAT, ...) decltype(ce::error_hook(__VA_ARGS__))::fn("\0" KIND "\0" WHAT "\0" CE_FILELINE "\0" #__VA_ARGS__, ##__VA_ARGS__)
 #define CE_AFFIRM(KIND, TEST, ...) bool{ TEST } || _CE_ERROR(KIND, #TEST, ##__VA_ARGS__) || (CE_DEBUG_BREAK(), true)
 
-#define CE_ERROR(...) ((void)_CE_ERROR("CE_ERROR", "", __VA_ARGS__), CE_DEBUG_BREAK())
+#define CE_ERROR(...) ((void)_CE_ERROR("CE_ERROR", "", ##__VA_ARGS__), CE_DEBUG_BREAK())
 #define CE_ASSERT(...) (void)(CE_PP_PASS(CE_AFFIRM CE_PP_ARGS("CE_ASSERT", __VA_ARGS__)))
 #define CE_VERIFY(...) (CE_PP_PASS(CE_AFFIRM CE_PP_ARGS("CE_VERIFY", __VA_ARGS__)))
-#define CE_FAILED(...) (!CE_PP_PASS(CE_AFFIRM CE_PP_ARGS("CE_FAILED", __VA_ARGS__)))
+#define CE_REJECT(...) (!CE_PP_PASS(CE_AFFIRM CE_PP_ARGS("CE_FAILED", __VA_ARGS__)))
 
 #define CE_COUNTOF(...) sizeof(ce::detail::countof_helper(__VA_ARGS__))
 #define CE_COUNTOF_ARGS(...) (sizeof(decltype(ce::detail::countof_args_helper(__VA_ARGS__))) - 1)

@@ -54,7 +54,7 @@ GTEST_TEST(ce, main)
         CE_LOG_MSG(info, "BAD");
     }
 
-    if (CE_FAILED(a > 2, a))
+    if (CE_REJECT(a > 2, a))
     {
         CE_LOG_MSG(info, "BAD");
     }
