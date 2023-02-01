@@ -84,7 +84,7 @@ namespace ce
     namespace os
     {
         extern void log(int level, int argc, char const* argv[][2]);
-        extern bool error(int level, int argc, char const* argv[][2]);
+        extern bool err_out(int level, int argc, char const* argv[][2]);
     }
 }
 
@@ -199,7 +199,7 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #ifdef CE_USER_ERROR_HOOK
 #define CE_ERROR_HOOK(LEVEL, ARGC, ...) CE_USER_ERROR_HOOK(LEVEL, ARGC, __VA_ARGS__)
 #else
-#define CE_ERROR_HOOK(LEVEL, ARGC, ...) ::ce::os::error(LEVEL, ARGC, __VA_ARGS__)
+#define CE_ERROR_HOOK(LEVEL, ARGC, ...) ::ce::os::err_out(LEVEL, ARGC, __VA_ARGS__)
 #endif
 
 #ifdef CE_USER_LOG_LEVEL

@@ -47,7 +47,7 @@ namespace ce
             debug_out(" }\n");
         }
 
-        inline bool error(int level, int argc, char const* argv[][2])
+        inline bool err_out(int level, int argc, char const* argv[][2])
         {
             auto out = [](char const text[]) { if (text != nullptr) debug_out(text); };
 
