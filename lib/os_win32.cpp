@@ -64,6 +64,9 @@ namespace ce
     {
         void debug_out(char const text[])
         {
+            if (text == nullptr)
+                return;
+
             CE_TO_UTF16(os_text, text);
             OutputDebugStringW(os_text);
         }

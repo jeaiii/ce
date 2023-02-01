@@ -49,32 +49,30 @@ namespace ce
 
         bool error(int level, int argc, char const* argv[][2])
         {
-            auto out = [](char const text[]) { if (text != nullptr) debug_out(text); };
+            debug_out("******** FAILED ********\n");
 
-            if (argc < 2 || argv == nullptr)
-                return level != 0;
-
-            out("******** FAILED ********\n");
-
-            out(argv[0][1]);
-            out(": ");
-            out(argv[0][0]);
-            out(": ");
-            out(argv[1][0]);
-            out(": (");
-            out(argv[1][1]);
-            out(") = (");
-            char const* prefix = "";
-            for (int i = 2; i < argc; ++i)
+            if (argv != nullptr && argc > 1)
             {
-                out(prefix);
-                prefix = ", ";
-                //out(argv[i][0]);
-                //out(" = ");
-                out(argv[i][1]);
+                debug_out(argv[0][1]);
+                debug_out(": ");
+                debug_out(argv[0][0]);
+                debug_out(": ");
+                debug_out(argv[1][0]);
+                debug_out(": (");
+                debug_out(argv[1][1]);
+                debug_out(") = (");
+
+                char const* prefix = "";
+                for (int i = 2; i < argc; ++i)
+                {
+                    debug_out(prefix);
+                    prefix = ", ";
+                    //out(argv[i][0]);
+                    //out(" = ");
+                    debug_out(argv[i][1]);
+                }
+                debug_out(")\n");
             }
-            out(")\n");
-            out("************************\n");
 
             return level != 0;
         }

@@ -35,6 +35,9 @@ namespace ce
     {
         void debug_out(char const text[])
         {
+            if (text == nullptr)
+                return;
+
             write(STDERR_FILENO, text, __builtin_strlen(text));
         }
 

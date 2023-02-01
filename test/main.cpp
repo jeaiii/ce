@@ -64,7 +64,6 @@ GTEST_TEST(ce, main)
         CE_LOG_MSG(info, "GOOD");
     }
 
-
 #if 0
     test_assert(a);
 
