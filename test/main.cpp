@@ -42,6 +42,28 @@ GTEST_TEST(ce, main)
 {
     volatile int a = 4;
 
+
+    CE_ASSERT(a > 1);
+    CE_ASSERT(a > 1, a, "test");
+
+    if (CE_VERIFY(a > 1))
+    {
+        CE_LOG_MSG(info, "GOOD");
+    }
+    else
+    {
+        CE_LOG_MSG(info, "BAD");
+    }
+
+    if (CE_REJECT(a > 4))
+    {
+        CE_LOG_MSG(info, "BAD");
+    }
+    else
+    {
+        CE_LOG_MSG(info, "GOOD");
+    }
+
 #if 0
     test_assert(a);
 
