@@ -167,25 +167,6 @@ namespace ce
         {
             return static_cast<uint8_t*>(VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
         }
-
-        void log(int level, int argc, char const* argv[][2])
-        {
-            char const* prefix = " ";
-            char header[5]{ "FEWNIDSM"[level < 0 ? 0 : level > 7 ? 7 : level], ':', ' ', '{' };
-
-            debug_out(header);
-            for (int i = 0; i < argc; ++i)
-            {
-                debug_out(prefix);
-                debug_out("\"");
-                debug_out(argv[i][0]);
-                debug_out("\": \"");
-                debug_out(argv[i][1]);
-                debug_out("\"");
-                prefix = ", ";
-            }
-            debug_out(" }\n");
-        }
     }
 }
 #endif

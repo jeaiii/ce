@@ -80,6 +80,12 @@ namespace ce
 
         class new_tag;
     }
+
+    namespace os
+    {
+        extern void log(int level, int argc, char const* argv[][2]);
+        extern bool error(int level, int argc, char const* argv[][2]);
+    }
 }
 
 inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return p; }
@@ -193,7 +199,7 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #ifdef CE_USER_ERROR_HOOK
 #define CE_ERROR_HOOK(LEVEL, ARGC, ...) CE_USER_ERROR_HOOK(LEVEL, ARGC, __VA_ARGS__)
 #else
-#define CE_ERROR_HOOK(LEVEL, ARGC, ...) ce::os::error(LEVEL, ARGC, __VA_ARGS__)
+#define CE_ERROR_HOOK(LEVEL, ARGC, ...) ::ce::os::error(LEVEL, ARGC, __VA_ARGS__)
 #endif
 
 #ifdef CE_USER_LOG_LEVEL
@@ -205,7 +211,7 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #ifdef CE_USER_LOG_HOOK
 #define CE_LOG_HOOK(LEVEL, ARGC, ...) CE_USER_LOG_HOOK(LEVEL, ARGC, __VA_ARGS__)
 #else
-#define CE_LOG_HOOK(LEVEL, ARGC, ...) ce::os::log(LEVEL, ARGC, __VA_ARGS__)
+#define CE_LOG_HOOK(LEVEL, ARGC, ...) ::ce::os::log(LEVEL, ARGC, __VA_ARGS__)
 #endif
 
 //--------
@@ -216,12 +222,12 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #define CE_FILELINE CE_FILELINE_EX(__FILE__, __LINE__)
 
 #define _CE_ERROR(KIND, WHAT, ...) decltype(ce::error_hook(__VA_ARGS__))::fn("\0" KIND "\0" WHAT "\0" CE_FILELINE "\0" #__VA_ARGS__, ##__VA_ARGS__)
-#define CE_AFFIRM(KIND, TEST, ...) bool{ TEST } || _CE_ERROR(KIND, #TEST, ##__VA_ARGS__) || (CE_DEBUG_BREAK(), true)
+#define CE_AFFIRM(KIND, TEST, ...) bool{ TEST } || _CE_ERROR(KIND, #TEST, ##__VA_ARGS__) || (CE_DEBUG_BREAK(), false)
 
 #define CE_ERROR(...) ((void)_CE_ERROR("CE_ERROR", "", ##__VA_ARGS__), CE_DEBUG_BREAK())
 #define CE_ASSERT(...) (void)(CE_PP_PASS(CE_AFFIRM CE_PP_ARGS("CE_ASSERT", __VA_ARGS__)))
 #define CE_VERIFY(...) (CE_PP_PASS(CE_AFFIRM CE_PP_ARGS("CE_VERIFY", __VA_ARGS__)))
-#define CE_REJECT(...) (!CE_PP_PASS(CE_AFFIRM CE_PP_ARGS("CE_FAILED", __VA_ARGS__)))
+#define CE_REJECT(...) !(!CE_PP_PASS(CE_AFFIRM CE_PP_ARGS("CE_REJECT", __VA_ARGS__)))
 
 #define CE_COUNTOF(...) sizeof(ce::detail::countof_helper(__VA_ARGS__))
 #define CE_COUNTOF_ARGS(...) (sizeof(decltype(ce::detail::countof_args_helper(__VA_ARGS__))) - 1)
@@ -413,45 +419,6 @@ namespace ce
     }
 
     template<size_t N, class T> auto get(T const& t) { return detail::crack<T, N>::get(t); }
-
-    namespace os
-    {
-        void debug_out(char const text[]);
-
-        inline bool error(int level, int argc, char const* argv[][2])
-        {
-            auto out = [](char const text[]) { if (text != nullptr) debug_out(text); };
-
-            if (argc < 2 || argv == nullptr)
-                return level != 0;
-
-            out("******** FAILED ********\n");
-
-            out(argv[0][1]);
-            out(": ");
-            out(argv[0][0]);
-            out(": ");
-            out(argv[1][0]);
-            out(": (");
-            out(argv[1][1]);
-            out(") = (");
-            char const* prefix = "";
-            for (int i = 2; i < argc; ++i)
-            {
-                out(prefix);
-                prefix = ", ";
-                //out(argv[i][0]);
-                //out(" = ");
-                out(argv[i][1]);
-            }
-            out(")\n");
-            out("************************\n");
-
-            return level != 0;
-        }
-
-        void log(int level, int argc, char const* argv[][2]);
-    }
 
     //--------
 
@@ -1002,14 +969,14 @@ namespace ce
         char const* file = next(what);
         char const* more = next(file);
 
-        char const* argv[3 + sizeof...(args)][2]
+        constexpr int argc = 2 + sizeof...(args);
+        char const* argv[argc + 1][2]
         {
             { kind, file },
             { what, more },
             { "...", args }...,
             { nullptr, nullptr }
         };
-        int argc = 2 + sizeof...(args);
         int level = static_cast<signed char>(*info);
         CE_LOG_HOOK(level, argc, argv);
         return CE_ERROR_HOOK(level, argc, argv);
@@ -1134,6 +1101,8 @@ namespace ce
 
     namespace os
     {
+        void debug_out(char const text[]);
+
         uint64_t monotonic_timestamp();
         uint64_t monotonic_frequency();
         void sleep_ns(uint64_t ns);
