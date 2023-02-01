@@ -353,6 +353,9 @@ namespace ce
 
     template<class T> using is_ptr = items<bool, is_unqualified_ptr<remove_cvref_t<T>>::value>;
 
+    template<class T> struct is_trivially_pass_by_value : items<bool, __is_trivially_copyable(T) && sizeof(T) <= 16> { };
+    template<class T> using best_pass_by_value_t = cond_t<is_trivially_pass_by_value<T>::value, T, T const&>;
+
     //--------
 
     namespace detail
@@ -982,13 +985,13 @@ namespace ce
         return CE_ERROR_HOOK(level, argc, argv);
     }
 
-    template<class T> using optimal_arg_t = cond_t<__is_trivially_copyable(T) && sizeof(T) <= 16, T, T const&>;
     template<class...Ts> struct error_hook
     {
         error_hook(Ts...) { }
         static bool CE_NOINLINE fn(char const e[], Ts...ts) { return call_error_hook(e, as_string{ ts }.as...); }
     };
-    template<class...Ts> error_hook(Ts...)->error_hook<optimal_arg_t<Ts>...>;
+
+    template<class...Ts> error_hook(Ts...)->error_hook< best_pass_by_value_t<Ts>...>;
 
     template<size_t N, size_t COUNT> struct names
     {
@@ -1409,15 +1412,6 @@ namespace ce
         constexpr size_t get_size() const { return N; }
     };
 }
-
-
-
-
-
-
-
-
-
 
 //#define CE_USER_CHECKED
 #if defined(CE_USER_CHECKED)

@@ -44,6 +44,8 @@ GTEST_TEST(ce, main)
 
 
     CE_ASSERT(a > 1);
+    CE_ASSERT(a > 1, a, "test");
+
     if (CE_VERIFY(a > 1))
     {
         CE_LOG_MSG(info, "GOOD");
