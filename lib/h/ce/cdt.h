@@ -144,7 +144,7 @@ namespace ce
                     { vs[fs[n].p1].x * m2w32, vs[fs[n].p1].y * m2w32 },
                     { vs[fs[n].p2].x * m2w32, vs[fs[n].p2].y * m2w32 },
                 },
-                { edge_id_t(fs[n].e0), edge_id_t(fs[n].e1), edge_id_t(fs[n].e1) },
+                { edge_id_t(fs[n].e0), edge_id_t(fs[n].e1), edge_id_t(fs[n].e2) },
                 { fs[n].c0 != 0, fs[n].c1 != 0, fs[n].c2 != 0 },
                 fs[n].fi,
             };
