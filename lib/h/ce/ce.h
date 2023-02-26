@@ -695,6 +695,7 @@ namespace ce
     {
         // 64 bit state - 32 bit result
         // http://prng.di.unimi.it/xoroshiro64starstar.c
+
         struct xoroshiro64ss
         {
             uint32_t a;
@@ -729,6 +730,7 @@ namespace ce
 
         // 128 bit state - 64 bit result
         // https://prng.di.unimi.it/xoroshiro128plusplus.c
+
         struct xoroshiro128pp
         {
             uint64_t a;
@@ -758,6 +760,79 @@ namespace ce
             friend uint64_t next64(xoroshiro128pp& g) { return next(g); }
 
         };
+
+        // 64 bit state - 32 bit result
+        // https://github.com/imneme/pcg-cpp
+
+        enum class pcg32_64_t : uint64_t { };
+
+        inline uint32_t read(pcg32_64_t g)
+        {
+            auto q = uint64_t(g);
+            auto a = q >> 59;
+            auto b = uint32_t(q >> 27 ^ q >> 45);
+
+            // RANT ON
+            // this is technically UB, but it compiles to ror on MSVC whereas b >> a | b << (-31 & a) does not :-(
+            // the c++ standard should consider making unsigned shifts b << a, b >> a, where a > 0 && bit_count(b) % a == 0, implementation defined behavior with a choice of either be 0 or b 
+            // then b >> a | b << (32 - a) === b when a == 0, since it reduces to b | b << 32 === b | (0 or b) === (b | 0) or (b | b) === b or b === b
+            // which is non longer UB and can be cosntexpr
+            // not sure why MSVC doesn't recongnize b >> a | b << (-31 & a) as a rotate...
+            // also it is really annoying that some processors only have ror or rol, but not both, and there is no particular reason for which one they have!
+            // I guess they want some programs to be slightly slower on their processors to save 1 op code
+            // RANT OFF
+            return b >> a | b << (32 - a);
+        }
+
+        inline pcg32_64_t step(pcg32_64_t g)
+        {
+            return pcg32_64_t{ 0x5851f42d4c957f2d * uint64_t(g) + 0xda3e39cb94b95bdb };
+        }
+
+        inline void seed(pcg32_64_t& g, uint64_t state)
+        {
+            g = step(pcg32_64_t{ uint64_t(step({ })) + state });
+        }
+
+        template<class T>
+        inline uint32_t next(T& g)
+        {
+            auto q = g;
+            auto e = read(q);
+            g = step(q);
+            return e;
+        }
+
+        template<class T>
+        inline uint32_t next_ranged(T& g, uint32_t n)
+        {
+            auto q = g;
+            auto m = (uint64_t(n) * read(q)) >> 32;
+            g = step(q);
+            return m;
+        }
+
+        template<class T>
+        uint32_t next_unbiased(T& g, uint32_t n)
+        {
+            auto q = g;
+            auto m = uint64_t(n) * read(q);
+            q = step(q);
+            auto p = uint32_t(m);
+            if (p < n)
+            {
+                auto k = -n % n;
+                while (p < k)
+                {
+                    m = uint64_t(n) * read(q);
+                    q = step(q);
+                    p = uint32_t(m);
+                }
+            }
+            g = q;
+            return uint32_t(m >> 32);
+        }
+
     }
 
     using namespace random;
