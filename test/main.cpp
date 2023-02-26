@@ -304,7 +304,7 @@ template<class T> auto test_random(T& g)
         sos += (c - 1024) * (c - 1024);
     }
 
-    CE_LOG(random, ce::nameof<T>(), lo, hi);
+    CE_LOG(random, ce::nameof<T>(), lo, hi, sos);
     return sos;
 }
 
@@ -333,10 +333,10 @@ GTEST_TEST(ce, random_xoroshiro128pp)
 
 GTEST_TEST(ce, random_pcg32_64)
 {
-    constexpr uint8_t data[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+    constexpr uint64_t data = 0xDEADFACE5A55FEA7;
 
     ce::random::pcg32_64_t g;
-    seed(g, 0xDEADFACE);
+    seed(g, data);
 
     auto sos = test_random(g);
 
