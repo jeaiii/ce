@@ -53,3 +53,20 @@ GTEST_TEST(sort, insertion_sort)
         i = x;
     }
 }
+
+GTEST_TEST(sort, random)
+{
+    ce::random::pcg32_64_t g;
+    seed(g, 0xABCDEF0123456789);
+
+    uint32_t b[4096];
+    for (auto& n : b) n = next_unbiased(g, 6);
+    ce::intro_sort<16>(b, b + CE_COUNTOF(b));
+
+    uint32_t z = 0;
+    for (auto n : b)
+    {
+        EXPECT_GE(n, z);
+        z = n;
+    }
+}

@@ -288,6 +288,9 @@ GTEST_TEST(ce, bulk_complex)
 
 template<class T> auto test_random(T& g)
 {
+    constexpr uint8_t data[] = "hello world";
+
+    seed(g, CE_COUNTOF(data), data);
 
     int counts[16]{ };
     for (size_t i = 0; i < 1024 * 16; ++i)
@@ -305,42 +308,28 @@ template<class T> auto test_random(T& g)
     }
 
     CE_LOG(random, ce::nameof<T>(), lo, hi, sos);
-    return sos;
+    return sos < 256 * 256 * 3 / 8;
 }
 
 GTEST_TEST(ce, random_xoroshiro64ss)
 {
-    constexpr uint8_t data[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-
     ce::random::xoroshiro64ss g;
-    seed(g, CE_COUNTOF(data), data);
-
     auto sos = test_random(g);
-
-    EXPECT_LT(sos, 256 * 256 * 3 / 8);
+    EXPECT_TRUE(sos);
 }
 
 GTEST_TEST(ce, random_xoroshiro128pp)
 {
-    constexpr uint8_t data[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-
     ce::random::xoroshiro128pp g;
-    seed(g, CE_COUNTOF(data), data);
-
     auto sos = test_random(g);
-    EXPECT_LT(sos, 256 * 256 * 3 / 8);
+    EXPECT_TRUE(sos);
 }
 
 GTEST_TEST(ce, random_pcg32_64)
 {
-    constexpr uint64_t data = 0xDEADFACE5A55FEA7;
-
     ce::random::pcg32_64_t g;
-    seed(g, data);
-
     auto sos = test_random(g);
-
-    EXPECT_LT(sos, 256 * 256 * 3 / 8);
+    EXPECT_TRUE(sos);
 }
 
 void get_timestamp_and_monotonic(uint64_t& timestamp, uint64_t& monotonic)
