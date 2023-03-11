@@ -791,7 +791,12 @@ namespace ce
 
         inline void seed(pcg32_64_t& g, uint64_t state)
         {
-            g = step(pcg32_64_t{ uint64_t(step({ })) + state });
+            g = step(pcg32_64_t{ uint64_t(step(pcg32_64_t{ })) + state });
+        }
+
+        inline void seed(pcg32_64_t& g, size_t size, uint8_t const data[])
+        {
+            seed(g, ce::hash::fnv1a64(size, data));
         }
 
         template<class T>
@@ -821,7 +826,7 @@ namespace ce
             auto p = uint32_t(m);
             if (p < n)
             {
-                auto k = -n % n;
+                auto k = 0u - n % n;
                 while (p < k)
                 {
                     m = uint64_t(n) * read(q);
