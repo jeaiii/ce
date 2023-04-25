@@ -313,7 +313,7 @@ namespace ce
         T as;
     };
 
-    template<class U> as_cast(U) -> as_cast<underlying_type_t<U>, U>;
+    template<class U> as_cast(U)->as_cast<underlying_type_t<U>, U>;
 
     //--------
 
@@ -363,8 +363,8 @@ namespace ce
         template<class T, size_t, size_t, class, class> struct sequence;
         template<class T, size_t N, size_t...As, size_t...Is> struct sequence<T, N, 0, items<size_t, As...>, items<size_t, Is...>> : sequence<T, N / 2, N % 2, items<size_t, As..., (sizeof...(As) + As)...>, items<size_t, Is...>> { };
         template<class T, size_t N, size_t...As, size_t...Is> struct sequence<T, N, 1, items<size_t, As...>, items<size_t, Is...>> : sequence<T, N / 2, N % 2, items<size_t, As..., (sizeof...(As) + As)...>, items<size_t, Is..., (sizeof...(Is) + As)...>> { };
-        template<class T, size_t...As, size_t...Is> struct sequence<T, 0, 0, items<size_t, As...>, items<size_t, Is...>> { using type = items<T, T{ Is }... > ; };
-        template<class T, size_t...As, size_t...Is> struct sequence<T, 0, 1, items<size_t, As...>, items<size_t, Is...>> { using type = items<T, T{ Is }..., T{ sizeof...(Is) + As }... > ; };
+        template<class T, size_t...As, size_t...Is> struct sequence<T, 0, 0, items<size_t, As...>, items<size_t, Is...>> { using type = items < T, T{ Is }... > ; };
+        template<class T, size_t...As, size_t...Is> struct sequence<T, 0, 1, items<size_t, As...>, items<size_t, Is...>> { using type = items < T, T{ Is }..., T{ sizeof...(Is) + As }... > ; };
     }
     template<class T, size_t N> using sequence = detail::sequence<T, N / 2, N % 2, items<size_t, 0>, items<size_t>>;
     template<class T, size_t N> using sequence_t = typename detail::sequence<T, N / 2, N % 2, items<size_t, 0>, items<size_t>>::type;
@@ -1000,7 +1000,7 @@ namespace ce
     }
 
     template<class...Ts> char* to_text(char text[], Ts const&...values)
-    { 
+    {
         return ((text = to_text(text, values)), ..., text);
     }
 
@@ -1030,10 +1030,28 @@ namespace ce
     template<> struct measure<long long> { static constexpr size_t value = 20; };          // -9223372036854775808
     template<> struct measure<unsigned long long> { static constexpr size_t value = 20; }; // 18??????????????????
 
+    template<class T> inline char* to_text_m(char* text, T from)
+    {
+        using U = ce::remove_cvref_t<T>;
+        if constexpr (ce::is_same<U, char const*>::value || ce::is_same<U, char*>::value)
+        {
+            return to_text_s(text, measure<T>::value, from);
+        }
+        else
+        {
+            return to_text(text, from);
+        }
+    }
+
     template<class...Ts> struct as_string
     {
         char as[measure<Ts...>::value + 1];
-        as_string(Ts...ts) { *ce::to_text(as, ts...) = 0; }
+
+        as_string(Ts...values)
+        {
+            auto* text = as;
+            *((text = to_text_m(text, values)), ..., text) = '\0';
+        }
     };
 
     template<size_t N> struct as_string<char const (&)[N]>
@@ -1041,7 +1059,14 @@ namespace ce
         char const (&as)[N];
     };
 
+    template<> struct as_string<char const*>
+    {
+        char const* as;
+    };
+
     template<class...Ts> as_string(Ts const&...)->as_string<Ts const&...>;
+
+    as_string(char const*)->as_string<char const*>;
 
     template<class...Ts> bool call_error_hook(char const info[], Ts const*... args)
     {

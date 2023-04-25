@@ -118,6 +118,13 @@ GTEST_TEST(ce, main)
 
     //CE_LOG(info, (4, "hello(\", j" ",", 5, "world"), (35));
     CE_LOG(info, (ce::vec2<int32_t, void>{ 1, 3 })        ,      ce::vec2<int32_t, void>{ 2, 5 });
+
+    char long_string[1152 + 1];
+    for (auto& c : long_string) c = 'Q';
+    long_string[1152] = '\0';
+
+    CE_LOG_MSG(info, (char const*)long_string);
+    CE_LOG_MSG(info, '[', (char const*)long_string, ']');
 }
 
 GTEST_TEST(ce, bulk_simple)
