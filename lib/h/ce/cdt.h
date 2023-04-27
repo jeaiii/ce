@@ -828,6 +828,7 @@ namespace ce
         bool split_constraint(int64_t px, int64_t py, vec2<int64_t> q, vec2<int64_t> a, vec2<int64_t> b, size_t hint)
         {
             //vec2<int64_t> r = intersect_edges(q, a, b);
+            CE_REF(a, b);
             vec2<int64_t> r{ q.x >> 1, q.y >> 1 };
 
             if (r == 0 || r == q)
