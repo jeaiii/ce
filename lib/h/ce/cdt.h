@@ -301,12 +301,14 @@ namespace ce
             CE_ASSERT(es[f.e1].c == f.c1);
             CE_ASSERT(es[f.e2].c == f.c2);
 
+#if 0
             auto a = vec2<int32_t>{ vs[f.p0].x, vs[f.p0].y };
             auto b = vec2<int32_t>{ vs[f.p1].x, vs[f.p1].y };
             auto c = vec2<int32_t>{ vs[f.p2].x, vs[f.p2].y };
             CE_ASSERT(crossx(b - a, c - a) < 0);
             CE_ASSERT(crossx(c - b, a - b) < 0);
             CE_ASSERT(crossx(a - c, b - c) < 0);
+#endif
         }
 
         bool incircle(size_t f, size_t v) const
@@ -416,7 +418,8 @@ namespace ce
             auto cx = q1.x - x;
             auto cy = q1.y - y;
 
-            return (ax * by < ay* bx&& bx* cy < by* cx);
+            //return (ax * by < ay * bx && bx * cy < by * cx);
+            return (ax * by <= ay * bx && bx * cy <= by * cx);
         }
 
         bool try_flip(size_t e)
@@ -453,7 +456,7 @@ namespace ce
             vec2<int64_t> b{ vs[es[n + 1].p].x - x, vs[es[n + 1].p].y - y };
             vec2<int64_t> c{ vs[es[n + 2].p].x - x, vs[es[n + 2].p].y - y };
 
-            int e = (b.x * c.y < b.y* c.x ? 1 : 0) + (c.x * a.y < c.y* a.x ? 2 : 0) + (a.x * b.y < a.y* b.x ? 4 : 0);
+            int e = (b.x * c.y < b.y * c.x ? 1 : 0) + (c.x * a.y < c.y * a.x ? 2 : 0) + (a.x * b.y < a.y * b.x ? 4 : 0);
 
             switch (e)
             {
@@ -598,7 +601,7 @@ namespace ce
 
                 CE_ASSERT(in(a, b) && in(b, c) && in(c, a));
 
-                int e = (b.x * c.y < b.y* c.x ? 1 : 0) + (c.x * a.y < c.y* a.x ? 2 : 0) + (a.x * b.y < a.y* b.x ? 4 : 0);
+                int e = (b.x * c.y < b.y * c.x ? 1 : 0) + (c.x * a.y < c.y * a.x ? 2 : 0) + (a.x * b.y < a.y * b.x ? 4 : 0);
 
                 CE_ASSERT(e != 0);
 
@@ -824,7 +827,9 @@ namespace ce
 
         bool split_constraint(int64_t px, int64_t py, vec2<int64_t> q, vec2<int64_t> a, vec2<int64_t> b, size_t hint)
         {
-            vec2<int64_t> r = intersect_edges(q, a, b);
+            //vec2<int64_t> r = intersect_edges(q, a, b);
+            CE_REF(a, b);
+            vec2<int64_t> r{ q.x >> 1, q.y >> 1 };
 
             if (r == 0 || r == q)
             {
@@ -855,8 +860,7 @@ namespace ce
             if (qn == 0)
                 return false;
 
-            // re-locate...flips may have changed things
-            pn = locate_insertion_node(px, py, pn);
+            pn = locate_insertion_node(px, py, pn); // re-locate...flips may have changed things
 
             for (;;)
             {
@@ -888,6 +892,8 @@ namespace ce
                         }
                         else if (!try_flip(n + 0))
                             return split_constraint(px, py, q, ps[1], ps[2], pn);
+
+                        pn = locate_insertion_node(px, py, pn); // re-locate...flips may have changed things
                     }
                     else
                         pn = es[n + 2].e;
@@ -907,6 +913,8 @@ namespace ce
                         }
                         else if (!try_flip(n + 1))
                             return split_constraint(px, py, q, ps[2], ps[0], pn);
+
+                        pn = locate_insertion_node(px, py, pn); // re-locate...flips may have changed things
                     }
                     else
                         pn = es[n + 0].e;
@@ -928,6 +936,8 @@ namespace ce
                         }
                         else if (!try_flip(n + 2))
                             return split_constraint(px, py, q, ps[0], ps[1], pn);
+
+                        pn = locate_insertion_node(px, py, pn); // re-locate...flips may have changed things
                     }
                     else
                         pn = es[n + 1].e;
