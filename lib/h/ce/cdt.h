@@ -301,7 +301,7 @@ namespace ce
             CE_ASSERT(es[f.e1].c == f.c1);
             CE_ASSERT(es[f.e2].c == f.c2);
 
-#if 0
+#if 1
             auto a = vec2<int32_t>{ vs[f.p0].x, vs[f.p0].y };
             auto b = vec2<int32_t>{ vs[f.p1].x, vs[f.p1].y };
             auto c = vec2<int32_t>{ vs[f.p2].x, vs[f.p2].y };
@@ -418,8 +418,7 @@ namespace ce
             auto cx = q1.x - x;
             auto cy = q1.y - y;
 
-            //return (ax * by < ay * bx && bx * cy < by * cx);
-            return (ax * by <= ay * bx && bx * cy <= by * cx);
+            return (ax * by < ay * bx && bx * cy < by * cx);
         }
 
         bool try_flip(size_t e)
@@ -827,9 +826,7 @@ namespace ce
 
         bool split_constraint(int64_t px, int64_t py, vec2<int64_t> q, vec2<int64_t> a, vec2<int64_t> b, size_t hint)
         {
-            //vec2<int64_t> r = intersect_edges(q, a, b);
-            CE_REF(a, b);
-            vec2<int64_t> r{ q.x >> 1, q.y >> 1 };
+            vec2<int64_t> r = intersect_edges(q, a, b);
 
             if (r == 0 || r == q)
             {
