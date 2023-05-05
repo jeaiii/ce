@@ -86,6 +86,11 @@ GTEST_TEST(ce, main)
     }
 #endif
 
+    //char garbage[256];
+    //char c = 255;
+    //for (auto& g : garbage) g = c--;
+    //ce::os::debug_out(garbage);
+    ce::os::debug_out(u8"z\u6c34\U0001d10b");
     CE_LOG(0);
     CE_LOG(info, "Hello World", a, a * a, a / a, a + a, a - a, a + 1, a + 2, a + 3, a + 4, a + 5);
     CE_LOG(snowball, "Hello Snowball");
