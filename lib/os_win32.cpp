@@ -64,11 +64,15 @@ namespace ce
     {
         void debug_out(char const text[])
         {
-            if (text == nullptr)
-                return;
+            // OutputDebugString is natively an A (ASCII) function
+            // ce assumes char* s are utf8 stringz
+            // so just pass it and hope for the best
+            // the debugger handles anything but doesn't print utf8
+            // see: http://unixwiz.net/techtips/outputdebugstring.html
+            // or step through OutputDebugStringW in a debugger...
 
-            CE_TO_UTF16(os_text, text);
-            OutputDebugStringW(os_text);
+
+            OutputDebugStringA(text);
         }
 
         uint64_t monotonic_timestamp()
