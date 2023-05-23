@@ -73,8 +73,9 @@ namespace ce
                 }
                 debug_out(")\n");
             }
-
-            return level != 0;
+            // return true to break
+            // return false to continue
+            return level == 0;
         }
     }
 }

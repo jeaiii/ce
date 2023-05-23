@@ -94,14 +94,12 @@ namespace ce
             DWORD ms = 0;
             if (ns != 0)
             {
-                ns /= 1000000u;
-                if (ns % 1000000u != 0)
-                    ns += 1;
-                ms = (DWORD)ns;
-                if (ms != ns)
+                auto ms64 = ns < 1000000u ? 1 : ns / 1000000u;
+                ms = (DWORD)ms64;
+                if (ms != ms64)
                     ms = ~(DWORD)0;
             }
-            Sleep(ms);
+            SleepEx(ms, FALSE);
         }
 
         file_t open_file(char const path[])

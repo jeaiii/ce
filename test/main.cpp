@@ -1,5 +1,7 @@
 #define CE_USER_CHECKED
 
+//#define CE_USER_ERROR_LEVEL 1
+
 #include "ce/ce.h"
 
 #include "ce/atomic.h"
@@ -410,7 +412,7 @@ GTEST_TEST(ce, monotonic_timestamp)
         auto qf = f / double(m);
         auto cf = qf * t;
 
-        CE_LOG(info, cf);
+        CE_LOG(info, cf, t, m);
         ce::os::sleep_ns(100000000);
     } while (m * 2 < f);
 }
