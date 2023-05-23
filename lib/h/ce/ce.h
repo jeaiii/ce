@@ -196,6 +196,12 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #include CE_USER_INCLUDE
 #endif
 
+#ifdef CE_USER_ERROR_LEVEL
+#define CE_ERROR_LEVEL CE_USER_ERROR_LEVEL
+#else
+#define CE_ERROR_LEVEL 1
+#endif
+
 #ifdef CE_USER_ERROR_HOOK
 #define CE_ERROR_HOOK(LEVEL, ARGC, ...) CE_USER_ERROR_HOOK(LEVEL, ARGC, __VA_ARGS__)
 #else
@@ -203,7 +209,7 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #endif
 
 #ifdef CE_USER_LOG_LEVEL
-#define CE_LOG_LEVEL CD_USER_LOG_LEVEL
+#define CE_LOG_LEVEL CE_USER_LOG_LEVEL
 #else
 #define CE_LOG_LEVEL 1
 #endif
@@ -222,7 +228,12 @@ inline void* operator new(ce::size_t, ce::detail::new_tag* p) noexcept { return 
 #define CE_FILELINE CE_FILELINE_EX(__FILE__, __LINE__)
 
 #define _CE_ERROR(KIND, WHAT, ...) decltype(ce::error_hook(__VA_ARGS__))::fn("\0" KIND "\0" WHAT "\0" CE_FILELINE "\0" #__VA_ARGS__, ##__VA_ARGS__)
-#define CE_AFFIRM(KIND, TEST, ...) bool{ TEST } || _CE_ERROR(KIND, #TEST, ##__VA_ARGS__) || (CE_DEBUG_BREAK(), false)
+
+#if CE_ERROR_LEVEL == 1
+#define CE_AFFIRM(KIND, TEST, ...) bool{ TEST } || _CE_ERROR(KIND, #TEST, ##__VA_ARGS__) && (CE_DEBUG_BREAK(), false)
+#else
+#define CE_AFFIRM(KIND, TEST, ...) bool{ TEST }
+#endif
 
 #define CE_ERROR(...) ((void)_CE_ERROR("CE_ERROR", "", ##__VA_ARGS__), CE_DEBUG_BREAK())
 #define CE_ASSERT(...) (void)(CE_PP_PASS(CE_AFFIRM CE_PP_ARGS("CE_ASSERT", __VA_ARGS__)))
