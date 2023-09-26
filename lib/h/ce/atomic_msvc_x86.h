@@ -40,10 +40,10 @@ namespace ce
         extern "C" __int32 __iso_volatile_load32(const volatile __int32* Location);
         extern "C" __int64 __iso_volatile_load64(const volatile __int64* Location);
 
-        extern "C" void __iso_volatile_store8(const volatile __int8* Location, __int8);
-        extern "C" void __iso_volatile_store16(const volatile __int16* Location, __int32);
-        extern "C" void __iso_volatile_store32(const volatile __int32* Location, __int32);
-        extern "C" void __iso_volatile_store64(const volatile __int64* Location, __int64);
+        extern "C" void __iso_volatile_store8(volatile __int8* Location, __int8);
+        extern "C" void __iso_volatile_store16(volatile __int16* Location, __int16);
+        extern "C" void __iso_volatile_store32(volatile __int32* Location, __int32);
+        extern "C" void __iso_volatile_store64(volatile __int64* Location, __int64);
 
         extern "C" char _InterlockedExchange8(char volatile* Addend, char Value);
         extern "C" short _InterlockedExchange16(short volatile* Addend, short Value);
